@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # SPEC home is:		/nethome/plavin3/spec/cpu/2017
 # Config file:		$SPEC/config/patrick-test.cfg
-# Benchmark file:	benchmarks.txt
+# Benchmark file:	song-benchmarks.txt
 # -----------------------------------------------
 # Generating configs for: 641.leela_s 605.mcf_s 623.xalancbmk_s 607.cactuBSSN_s 621.wrf_s 654.roms_s
 # -----------------------------------------------
