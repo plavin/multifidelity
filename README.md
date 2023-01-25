@@ -19,6 +19,16 @@ This README covers the workflow for woking with SPEC CPU and Ariel.
 4. Generate configs for Ariel
 
   - Use the command `./generate.py <config name> <benchmarks file>` to create a file with a dict of configs for Ariel. This dict has two fields: `cmd` and `directory`. The former is the command used to run the benchmark and the latter is the directory the command must be run from. The reason for the directory change is that some of the arguments to the program are relative paths to files. 
+  - This can take 10 minutes on flubber8
+  - Potential issues:
+    - Check to see if there are more then 1 set of build directories for the benchmarks (e.g. are the directories ending in numbers greater than 0000, such as 0001, and 0002?) You may want to delete those and retry. 
+      - `runcpu <config-name> -a clean all`
+      - `runcpu <config-name> -a realclean all`
+      - `runcpu <config-name> -a clobber all`
+    - These commands may help as well
+      - `rm -Rf $SPEC/benchspec/C*/*/run`
+      - `rm -Rf $SPEC/benchspec/C*/*/build`
+      - `rm -Rf $SPEC/benchspec/C*/*/exe`
 
 5. Run Ariel
 

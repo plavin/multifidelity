@@ -68,7 +68,7 @@ def parseAriel (command, cmddir='./'):
 
             if (part.type == '<'):
                 #stdin = cmddir + part.output.word
-                stdin = os.path.join(cmddir, part.outout.word)
+                stdin = os.path.join(cmddir, part.output.word)
 
             elif (part.type == '>'):
                 if (not part.input or part.input == 1):
@@ -135,3 +135,8 @@ def parseAriel (command, cmddir='./'):
 
     return params
 
+def parse_generate_py_configs(filename):
+    with open(filename) as configfile:
+          lines = configfile.readlines()
+          config = eval(''.join(lines))
+    return config

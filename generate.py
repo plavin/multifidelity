@@ -80,32 +80,51 @@ with open(config_file, 'r') as cf:
 
 # Execute fake run to set up directories
 step1 = {}
+configs = {}
 print_prefix('Step 1: Execute fake run to set up directories')
 for bench in benchmark:
     print_prefix(f'{bench}: ', end='')
+    # Make sure binaries are built
+    os.popen("runcpu --action runsetup --loose --size test --tune base --config {} {}".format(config, bench)).read()
+    # Need output for next step
     out = os.popen("runcpu --fake --loose --size test --tune base --config {} {}".format(config, bench)).read()
+
+    # Make sure run completed successfully
     regex = "Success:.*" + re.escape(bench)
-    if (re.search(regex, out)):
+    if not (re.search(regex, out)):
+        print('failure - failed to complete test run successfully')
+        step1[bench] = False
+
+    # Make sure we can find directory
+    found_dir = False
+    for line in out.split('\n'):
+        x = re.findall("^cd ", line)
+        if x:
+            configs[bench] = {'directory':line.split()[1]}
+            found_dir = True
+            break
+
+    if not found_dir:
+        print('failure - failed to find run directory')
+        step1[bench] = False
+    else:
         print('success')
         step1[bench] = True
-    else:
-        print('failure')
-        step1[bench] = False
-        print_prefix(f"Error: Failed to complete step 1 for {bench}.")
+
 
 # Check that step1 passed for all benchmarks
 if (not all(step1)):
     print(f'Error: Step 1 failed to complete for some benchmarks')
+    sys.exit(1)
 
 step2 = {}
-configs = {}
 
 print_separator()
 print_prefix('Step 2: Parse logs from step 1 to determine how to invoke benchmark')
 
 for bench in benchmark:
     print(f'# {bench}: ', end='')
-    bindir = spechome+"/benchspec/CPU/{}/run/run_base_test_pattest-m64.0000".format(bench)
+    bindir = configs[bench]['directory']
     try:
         os.chdir(bindir)
     except:
@@ -117,6 +136,7 @@ for bench in benchmark:
     # run specinvoke
     out = os.popen("specinvoke -n").read()
 
+    found = False
     for line in out.splitlines():
         x = re.findall("^#", line)
         if x:
@@ -124,10 +144,7 @@ for bench in benchmark:
         x = re.findall("^specinvoke", line)
         if x:
             continue
-        configs[bench] = {
-            'cmd': line,
-            'directory': bindir
-        }
+        configs[bench]['cmd'] = line
 
     step2[bench] = True
     print('success')
