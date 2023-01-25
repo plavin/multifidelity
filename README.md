@@ -29,8 +29,9 @@ This README covers the workflow for woking with SPEC CPU and Ariel.
       - `rm -Rf $SPEC/benchspec/C*/*/run`
       - `rm -Rf $SPEC/benchspec/C*/*/build`
       - `rm -Rf $SPEC/benchspec/C*/*/exe`
+    - You shouldn't need these anymore but I'm leaving this for reference.
 
-5. Run Ariel
+5. Use `simulate.py`
 
-  - You can run `sst --stop-at 25ms spec_ariel_test.py` to try out the benchmarks in SST on a simple architecture.
+  - For example, run `./simulate.py song_pattest_3.py spec_ariel_test.py 0` to run the first benchmark (index 0)
 
