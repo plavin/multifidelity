@@ -1,0 +1,6 @@
+# HELP ME
+So you forgot how to run this simulation, huh? Try one of these:
+- `./simulate.py song_pattest_3.py spec_ariel_test.py 0`
+- `/nethome/plavin3/sst/install/bin/sst --stop-at 10ms spec_ariel_test.py -- song_pattest_3.py 605.mcf_s`
+
+Remember, you can run `simulate.py` without any arguments to get help.

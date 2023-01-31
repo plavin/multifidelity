@@ -38,8 +38,8 @@ run = config[bench]
 ariel_command = parseAriel(run['cmd'])
 wd=os.getcwd()
 os.chdir(run['directory'])
-print(f'ariel_command: {ariel_command}')
 
+print(os.getcwd())
 pp = pprint.PrettyPrinter(indent=2, compact=True)
 pp.pprint(ariel_command)
 

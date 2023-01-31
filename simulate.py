@@ -55,11 +55,15 @@ if __name__ == "__main__":
 
     # Run specified simulations
     for b in index:
-        subprocess.run(['/nethome/plavin3/sst/install/bin/sst', '--stop-at', '10ms', sdl_filename,
-                        '--', config_filename, list(configs.keys())[b]])
+        print(f'Simulating {b}')
+        command = ['/nethome/plavin3/sst/install/bin/sst', '--stop-at', '10ms', sdl_filename,
+        #           '--enable-profiling=events:sst.profile.handler.event.time.high_resolution(level=type)[event]',
+                   '--', config_filename, list(configs.keys())[b]]
+        print(' '.join(command))
+        subprocess.run(command)
         #print(['/nethome/plavin3/sst/install/bin/sst', '--stop-at', '10ms', sdl_filename,
         #                '--', config_filename, list(configs.keys())[b]])
 
 
 
-
+print('Done.')
