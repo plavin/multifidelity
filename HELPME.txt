@@ -1,6 +1,11 @@
 # HELP ME
-So you forgot how to run this simulation, huh? Try one of these:
+So you forgot how to run this simulation, huh? Try one of these.
+## Simulation script
 - `./simulate.py song_pattest_3.py spec_ariel_test.py 0`
+- You can run `simulate.py` without any arguments to get help.
+## Run SST directly
 - `/nethome/plavin3/sst/install/bin/sst --stop-at 10ms spec_ariel_test.py -- song_pattest_3.py 605.mcf_s`
-
-Remember, you can run `simulate.py` without any arguments to get help.
+## Run with profiling
+- Events only: ` /nethome/plavin3/sst/install/bin/sst --enable-profiling="events:sst.profile.handler.event.time.high_resolution(level=type)[event]" --stop-at 10ms spec_ariel_test.py -- song_pattest_3.py 605.mcf_s`
+- Clocks only: ` /nethome/plavin3/sst/install/bin/sst --enable-profiling="clocks:sst.profile.handler.clock.time.high_resolution(level=type)[clock]" --stop-at 10ms spec_ariel_test.py -- song_pattest_3.py 605.mcf_s`
+- Events and clocks: `/nethome/plavin3/sst/install/bin/sst --enable-profiling="clocks:sst.profile.handler.clock.time.high_resolution(level=type)[clock];events:sst.profile.handler.event.time.high_resolution(level=type)[event]" --stop-at 10ms spec_ariel_test.py -- song_pattest_3.py 605.mcf_s`
