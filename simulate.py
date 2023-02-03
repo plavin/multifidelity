@@ -4,11 +4,96 @@ import sys
 import os
 from ariel_utils import parse_generate_py_configs as get_configs
 import subprocess
+from io import StringIO
+import pandas as pd
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index [index ...]]')
     print('The first argument is the output of ./generate.py')
     print('Specify indices benchmarks to run. Leaving blank will run all benchmarks in config file.')
+
+def build_profiling_string(profilers):
+    if len(profilers) < 1:
+        return ''
+    result = '--enable-profiling=' #ClockStats:sst.profile.handler.clock.time.high_resolution(level=type)[clock]'
+    for prof_name, prof_str in profilers.items():
+        result += f'{prof_name}:{prof_str};'
+    return result[:-1] # remove trailing semicolon
+
+def parse_profiling(stdout, prof_names):
+    lines = stdout.split('\n')
+    df = {}
+    for name in prof_names:
+        found = False
+        start = 0
+        end = 0
+        for i in range(len(lines)):
+            if not found:
+                if name not in lines[i]:
+                    continue
+                found = True
+                start = i
+            if '-------------------' in lines[i] or lines[i].strip() == '':
+                end = i
+                break
+        df[name] = pd.read_csv(StringIO('\n'.join(lines[start+1:end])))
+    return df
+
+def parse_timing(stderr):
+    # times are reported in seconds
+    lines = stderr.split('\n')
+    times = {}
+    label = ['real', 'user', 'sys']
+    for lab in label:
+        found = False
+        for l in lines:
+            if lab == l[0:len(lab)]: # find line that starts with desired label
+                times[lab] = float(l.split()[1])
+                break
+        if lab not in times.keys(): # check that the label was found at some point
+            print(f'Error: Unable to parse `{lab}` time')
+    return times
+
+def parse_sim_time(stdout):
+    lines = stdout.split('\n')
+    for l in lines:
+        if 'Simulation is complete' in l:
+            return l.split()[5:7]
+    pritf('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
+    sys.exit(1)
+
+class SimStats():
+    def __init__(self, command, prof_config):
+
+        self.command = command
+        self.prof_config = prof_config
+        subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+
+        self.stdout = subp.stdout
+        self.stderr = subp.stderr
+        self.sim_time = parse_sim_time(subp.stdout)
+        self.profile  = parse_profiling(subp.stdout, prof_config.keys())
+        self.times    = parse_timing(subp.stderr)
+
+    def __repr__(self):
+        s = ''
+
+        # Simulated time
+        s += f'Simulated time: {" ".join(self.sim_time)}\n\n'
+
+        # Profiling data
+        for name, df in self.profile.items():
+            s += (f'Profiler: {name}\n')
+            s += str(df)
+            s += '\n'
+
+        # Data from `time` command
+        if len(self.times) > 0:
+            s += '\nTiming (seconds)\n'
+            for l, t in self.times.items():
+                s += f' {l}:\t{t}\n'
+
+        return s
 
 if __name__ == "__main__":
 
@@ -54,16 +139,25 @@ if __name__ == "__main__":
 
 
     # Run specified simulations
+    stats_dict = {
+                  'ClockStats' : 'sst.profile.handler.clock.time.high_resolution(level=type)[clock]',
+                  'EventStats' : 'sst.profile.handler.event.time.high_resolution(level=type)[event]'
+                 }
+
+    prof_str = build_profiling_string(stats_dict)
+
     for b in index:
         print(f'Simulating {b}')
-        command = ['/nethome/plavin3/sst/install/bin/sst', '--stop-at', '10ms', sdl_filename,
-        #           '--enable-profiling=events:sst.profile.handler.event.time.high_resolution(level=type)[event]',
-                   '--', config_filename, list(configs.keys())[b]]
-        print(' '.join(command))
-        subprocess.run(command)
-        #print(['/nethome/plavin3/sst/install/bin/sst', '--stop-at', '10ms', sdl_filename,
-        #                '--', config_filename, list(configs.keys())[b]])
-
-
+        command = [
+                  'time', '-p',
+                   '/nethome/plavin3/sst/install/bin/sst',
+                   '--stop-at', '10ms',
+                   #'--exit-after=0:0:10',
+                   prof_str,
+                   sdl_filename, '--', config_filename, list(configs.keys())[b]
+                  ]
+        st = SimStats(command, stats_dict)
+        print(st)
+        print('Simulation completed. Output is in run.out and run.err.')
 
 print('Done.')

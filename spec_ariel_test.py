@@ -39,9 +39,8 @@ ariel_command = parseAriel(run['cmd'])
 wd=os.getcwd()
 os.chdir(run['directory'])
 
-print(os.getcwd())
-pp = pprint.PrettyPrinter(indent=2, compact=True)
-pp.pprint(ariel_command)
+print(f'sdl: {sys.argv}')
+print(f'ariel command: {ariel_command}')
 
 # Components
 core    = sst.Component("Ariel", "ariel.ariel")
