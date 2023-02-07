@@ -1,2 +1,2 @@
-mmb: mm_blocked.c
-		gcc -o mmb mm_blocked.c
+mm: matmul-openmp.c
+		gcc -fopenmp -o mm matmul-openmp.c

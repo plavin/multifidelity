@@ -84,7 +84,7 @@ parser = argparse.ArgumentParser(description='Run a Fujitsu A64FX-like processor
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-n', '--ncpu',     default='1', help='Number of cpus in each core group.', type=int)
 parser.add_argument('-g', '--ngroup',   default='4', help='Number of core groups.', type=int)
-parser.add_argument('-w', '--workload', default='default-workload.py:mmb', help='Specify configuration as config-file.py:config-name')
+parser.add_argument('-w', '--workload', default='default-workload.py:mm', help='Specify configuration as config-file.py:config-name')
 parser.add_argument('-v', '--verbose',  default=0, action='store_const', help='Display configuration info.', const=1)
 config = parser.parse_args(sys.argv[1:])
 
