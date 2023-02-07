@@ -17,17 +17,18 @@ class CMG:
 
         # Make L1s, connect to bus
         for i in range(cores_per_group):
-            sst.pushNamePrefix("Core"+str(i))
+            sst.pushNamePrefix(f"Core{i}")
 
             l1 = mk(sst.Component("L1Cache", "memHierarchy.Cache"), params.l1)
             mklink(core_links[group_id*cores_per_group+i],
-                   (l1,    "high_network_0", latency)).setNoCut()
-            mklink((l1,    "low_network_0", latency),
-                   (bus,   "high_network_"+str(i), latency))
+                   (l1,     "high_network_0", latency)).setNoCut()
+            mklink((l1,     "low_network_0", latency),
+                   (bus,   f"high_network_{i}", latency))
 
             sst.popNamePrefix()
 
         # Make L2, attach to the bus to the l1
+        params.l2["slide_id"] = group_id*cores_per_group+i
         l2        = mk(sst.Component("L2Cache","memHierarchy.Cache"), params.l2)
         l2cpulink = mk(l2.setSubComponent("cpulink", "memHierarchy.MemLink"), params.memlink)
 
@@ -83,10 +84,8 @@ parser = argparse.ArgumentParser(description='Run a Fujitsu A64FX-like processor
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-n', '--ncpu',     default='1', help='Number of cpus in each core group.', type=int)
 parser.add_argument('-g', '--ngroup',   default='4', help='Number of core groups.', type=int)
-parser.add_argument('-e', '--exe',      default='./mml', help='Executable which will be traced by Ariel.')
-parser.add_argument('-a', '--args',     default='10', help='The arguments passed to the executable.')
+parser.add_argument('-w', '--workload', default='default-workload.py:mmb', help='Specify configuration as config-file.py:config-name')
 parser.add_argument('-v', '--verbose',  default=0, action='store_const', help='Display configuration info.', const=1)
-parser.add_argument('-w', '--workload', default='ariel', help='Which workload to run', type=str)
 config = parser.parse_args(sys.argv[1:])
 
 # TODO: Investigate if this is necessary (print out OMP_NUM_THREADS in the executable to see if ariel
@@ -102,18 +101,16 @@ default_latency = "1000ps"
 # TODO -prefetchers
 
 # Initialize our Param object
-params = params2.Param(config.ncpu, config.ngroup, config.exe, config.args)
+params = params2.Param(config.ncpu, config.ngroup, config.workload)
 
 #################
 ## SIM WIRE UP ##
 #################
 
 core_links = []
-if (config.workload=='ariel'):
-    ariel = mk(sst.Component("Ariel","ariel.ariel"), params.ariel)
-    for i in range(config.ncpu*config.ngroup):
-        core_links.append((ariel, "cache_link_"+str(i), default_latency))
-
+ariel = mk(sst.Component("Ariel","ariel.ariel"), params.ariel)
+for i in range(config.ncpu*config.ngroup):
+    core_links.append((ariel, "cache_link_"+str(i), default_latency))
 
 # Create the grid, row by row. Make the router, then pass it to
 # the CMG constructor so the compute and memory can be attached.

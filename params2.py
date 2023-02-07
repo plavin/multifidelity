@@ -1,6 +1,7 @@
 # Module for reusing params for various components
 
 import os, sys
+from ariel_utils import parseAriel
 
 freq             = "2.0GHz"
 cache_line_bytes = "256"
@@ -56,16 +57,23 @@ class MemCtrlParam:
         }
 
 class Param:
-    def __init__(self, ncpu, ngroup, exe, args):
+    def __init__(self, ncpu, ngroup, workload):
         self.dc      = DCParam(ngroup)
         self.memctrl = MemCtrlParam(ngroup)
+
+        workload_filename = workload.split(':')[0]
+        with open(workload_filename) as workload_file:
+            lines         = workload_file.readlines()
+            workload_dict = eval(''.join(lines))
+
+        workload = workload.split(':')[1]
+        print(f'workload_filename: {workload_filename}, workload: {workload}, dict_entry: {workload_dict[workload]}')
+        ariel_cmd = parseAriel(workload_dict[workload]['cmd'])
 
         self.ariel   = {
             "verbose"        : 0,
             "corecount"      : ncpu*ngroup,
             "cachelinesize"  : cache_line_bytes,
-            "executable"     : exe,
-            "appargcount"    : len(args),
             "envparamcount"  : 1,
             "envparamname0"  : "OMP_NUM_THREADS",
             "envparamval0"   : str(ncpu*ngroup),
@@ -73,8 +81,8 @@ class Param:
             "arielmode"      : 0,
         }
 
-        for i in range(len(args)):
-            self.ariel["apparg" + str(i)] = args[i]
+        self.ariel = {**self.ariel, **ariel_cmd}
+        print(self.ariel)
 
         self.l1 = {
             "cache_frequency"       : freq,
