@@ -103,6 +103,9 @@ default_latency = "1000ps"
 # Initialize our Param object
 params = params2.Param(config.ncpu, config.ngroup, config.workload)
 
+# Change to the directory that our workload wants to run from
+os.chdir(params.workload_dir)
+
 #################
 ## SIM WIRE UP ##
 #################

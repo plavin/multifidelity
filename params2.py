@@ -70,6 +70,8 @@ class Param:
         print(f'workload_filename: {workload_filename}, workload: {workload}, dict_entry: {workload_dict[workload]}')
         ariel_cmd = parseAriel(workload_dict[workload]['cmd'])
 
+        self.workload_dir = workload_dict[workload]['directory']
+
         self.ariel   = {
             "verbose"        : 0,
             "corecount"      : ncpu*ngroup,

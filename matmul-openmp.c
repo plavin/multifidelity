@@ -9,6 +9,7 @@ void ariel_enable() {
 }
 
 void fill(dtype *a, int N, double f) {
+#pragma omp parallel for
     for (int i = 0; i < N*N; i++) {
         a[i] = f;
     }

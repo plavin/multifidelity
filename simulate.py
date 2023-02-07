@@ -59,7 +59,7 @@ def parse_sim_time(stdout):
     for l in lines:
         if 'Simulation is complete' in l:
             return l.split()[5:7]
-    pritf('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
+    print('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
     sys.exit(1)
 
 class SimStats():
@@ -154,8 +154,9 @@ if __name__ == "__main__":
                    '--stop-at', '10ms',
                    #'--exit-after=0:0:10',
                    prof_str,
-                   sdl_filename, '--', config_filename, list(configs.keys())[b]
+                   sdl_filename, '--', '-w' ,f'{config_filename}:{list(configs.keys())[b]}',
                   ]
+        print(command)
         st = SimStats(command, stats_dict)
         print(st)
         print('Simulation completed. Output is in run.out and run.err.')
