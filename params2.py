@@ -155,17 +155,17 @@ class Param:
         #each other? The DC will, I think.
 
         self.l2nic = {
-            "group":"2",
-            "sources":"1",
-            "destinations":"1",
+            "group":"1",
+            #"sources":"1",
+            #"destinations":"1",
             #"accept_region" : 0,
         }
 
         self.dcnic = {
-            "group":"1",
-            "sources":"2",
-            "destinations":"2",
-            "accept_region" : 0,
+            "group":"2",
+            #"sources":"2",
+            #"destinations":"2",
+            #"accept_region" : 0,
         }
 
 
