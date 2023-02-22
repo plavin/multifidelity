@@ -19,8 +19,9 @@ if (len(sys.argv) < 3):
       usage()
       sys.exit(1)
 
-config_filename = sys.argv[1]
-bench = sys.argv[2]
+
+config_filename = sys.argv[2].split(':')[0]
+bench = sys.argv[2].split(':')[1]
 
 # Check that config file exists
 with open(config_filename) as configfile:

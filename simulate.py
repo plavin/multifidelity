@@ -67,6 +67,8 @@ class SimStats():
 
         self.command = command
         self.prof_config = prof_config
+        print(f'PAT Command: {" ".join(command)}')
+        print(f'PAT Dir: {os.getcwd()}')
         subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
 
         self.stdout = subp.stdout

@@ -104,6 +104,9 @@ default_latency = "1000ps"
 params = params2.Param(config.ncpu, config.ngroup, config.workload)
 
 # Change to the directory that our workload wants to run from
+with open('debug.txt', 'w') as dbg:
+    dbg.write(f'numa.py: CHANGING TO : {params.workload_dir}\n\n')
+    dbg.write(f'Ariel command:\n{params.ariel}\n')
 os.chdir(params.workload_dir)
 
 #################

@@ -80,7 +80,7 @@ class Param:
             "envparamname0"  : "OMP_NUM_THREADS",
             "envparamval0"   : str(ncpu*ngroup),
             "clock"          : freq,
-            "arielmode"      : 0,
+            "arielmode"      : 1,
         }
 
         self.ariel = {**self.ariel, **ariel_cmd}
