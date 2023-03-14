@@ -7,10 +7,12 @@ import subprocess
 from io import StringIO
 import pandas as pd
 
+STOP_AT = '500us'
+
 def usage():
-    print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index [index ...]]')
+    print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
     print('The first argument is the output of ./generate.py')
-    print('Specify indices benchmarks to run. Leaving blank will run all benchmarks in config file.')
+    print('Specify indices benchmarks to run. Specify `all` to run all benchmarks in config file.')
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -67,9 +69,9 @@ class SimStats():
 
         self.command = command
         self.prof_config = prof_config
-        print(f'PAT Command: {" ".join(command)}')
-        print(f'PAT Dir: {os.getcwd()}')
-        subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+        #print(f'PAT Command: {" ".join(command)}')
+        #print(f'PAT Dir: {os.getcwd()}')
+        subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True)
 
         self.stdout = subp.stdout
         self.stderr = subp.stderr
@@ -99,7 +101,7 @@ class SimStats():
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         usage()
         sys.exit(1)
 
@@ -121,23 +123,26 @@ if __name__ == "__main__":
         print(f'No configs parsed.')
         sys.exit(1)
 
+
     # Parse which configs to run
     index = []
     all_indices = [*range(0, len(configs))]
-    if len(sys.argv) == 3:
+    if sys.argv[3] == 'all':
         index = all_indices
     else:
-        for i in range(3, len(sys.argv)):
-            try:
-                index.append(int(sys.argv[i]))
-            except:
-                print(f'Error: Unable to parse `{sys.argv[i]}` as int')
-                sys.exit(1)
-
+        index = [int(i) for i in sys.argv[3].split(',')]
         for i in index:
             if i not in [*range(0, len(configs))]:
                 print(f'Error: Specified index `{i}` out of range `{all_indices[0]}-{all_indices[-1]}`')
                 sys.exit(1)
+
+    # Parrots
+    parrot_levels = ''
+    if len(sys.argv) > 4:
+        parrot_levels = sys.argv[4]
+
+    print(f'index: {index}')
+    print(f'parrot_levels: {parrot_levels}')
 
 
     # Run specified simulations
@@ -153,10 +158,10 @@ if __name__ == "__main__":
         command = [
                   'time', '-p',
                    '/nethome/plavin3/sst/install/bin/sst',
-                   '--stop-at', '10ms',
+                   '--stop-at', STOP_AT,
                    #'--exit-after=0:0:10',
                    prof_str,
-                   sdl_filename, '--', '-w' ,f'{config_filename}:{list(configs.keys())[b]}',
+                   sdl_filename, '--', f'{config_filename}:{list(configs.keys())[b]} {parrot_levels}',
                   ]
         print(command)
         st = SimStats(command, stats_dict)
