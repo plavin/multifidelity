@@ -5,12 +5,16 @@ import os
 
 # Globals
 NCORES            = 4
-LATENCY           = '1000ps'
-LAT2              = '500ps'
-FREQ              = '2.0GHz'
+LATENCY           = '100ps'
+LAT2              = '50ps'
+CORE_FREQ         = '2.0GHz'
+UNCORE_FREQ       = '1.0GHz'
+MEM_FREQ          = '500MHz'
 COHERENCE         = 'MESI'
 REPLACEMENT       = 'lru'
 CACHE_LINE_BYTES  = '64'
+
+# Levels that we can place a Parrot above
 ALLOWED_PARROTS   = ['l1', 'l2', 'mem']
 
 # Utility method
@@ -72,12 +76,12 @@ params = {
             'envparamcount'  : 1,
             'envparamname0'  : 'OMP_NUM_THREADS',
             'envparamval0'   : str(NCORES),
-            'clock'          : FREQ,
+            'clock'          : CORE_FREQ,
             'arielmode'      : 1,
       },
 
       'l1cache' : {
-            'cache_frequency'       : FREQ,
+            'cache_frequency'       : CORE_FREQ,
             'cache_size'            : '4KiB',
             'associativity'         : '4',
             'access_latency_cycles' : '2',
@@ -87,11 +91,12 @@ params = {
             'replacement_policy'    : REPLACEMENT,
             'l1prefetcher'            : 'cassini.StridePrefetcher',
             'debug'                 : '0',
+            'banks'                 : '8',
       },
 
       'l2cache' : {
             'access_latency_cycles' : '20',
-            'cache_frequency'       : FREQ,
+            'cache_frequency'       : UNCORE_FREQ,
             'replacement_policy'    : REPLACEMENT,
             'coherence_protocol'    : COHERENCE,
             'associativity'         : '4',
@@ -101,14 +106,15 @@ params = {
             'L1'                    : '0',
             'cache_size'            : '1MiB',
             'mshr_latency_cycles'   : '5',
+            'banks'                 : '8',
       },
 
       'l1l2bus' : {
-            'bus_frequency' : FREQ,
+            'bus_frequency' : UNCORE_FREQ,
       },
 
       'memctrl' : {
-            'clock'          : FREQ,
+            'clock'          : MEM_FREQ,
             'backing'        : 'none',
             'addr_range_end' : 1024**3-1
       },
@@ -119,7 +125,7 @@ params = {
       },
 
       'parrot' : {
-            'clock' : FREQ,
+            'clock' : CORE_FREQ,
       },
 }
 
