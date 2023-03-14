@@ -7,7 +7,7 @@ import subprocess
 from io import StringIO
 import pandas as pd
 
-STOP_AT = '500us'
+STOP_AT = '1ms'
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
