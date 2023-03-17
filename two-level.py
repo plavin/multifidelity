@@ -114,9 +114,9 @@ params = {
       },
 
       'memctrl' : {
-            'clock'          : MEM_FREQ,
-            'backing'        : 'none',
-            'addr_range_end' : 1024**3-1
+            'clock'            : MEM_FREQ,
+            'backing'          : 'none',
+            'addr_range_end'   : 1024**3-1,
       },
 
       'backend' : {
@@ -188,6 +188,21 @@ if __name__ == '__main__':
 
       for par in parrots.values():
             par.addParams(params['parrot'])
+
+      # Only enable phase detection when we have Parrots,
+      # otherwise the phase message will break the memory controller
+      if (len(parrots) > 0):
+            core.addParams({'phase_detection':True})
+
+      # By default, the Parrots will not foward the phase messages
+      # but if we have more than one, we need the higher levels to
+      # forward them.
+      if len(parrot_levels) > 1:
+            if 'l1' in parrot_levels:
+                  parrots['l1'].addParams({'forward':True})
+            if 'l2' in parrot_levels and 'mem' in parrot_levels:
+                  parrots['l2'].addParams({'forward':True})
+
 
       # Ariel cores to L1 links
       if 'l1' in parrot_levels:
