@@ -4,7 +4,7 @@ import sys
 import os
 
 # Globals
-NCORES            = 4
+NCORES            = 1
 LATENCY           = '100ps'
 LAT2              = '50ps'
 CORE_FREQ         = '2.0GHz'
