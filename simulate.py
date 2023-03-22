@@ -6,6 +6,7 @@ from ariel_utils import parse_generate_py_configs as get_configs
 import subprocess
 from io import StringIO
 import pandas as pd
+import numpy as np
 
 STOP_AT = '4ms'
 
@@ -64,11 +65,40 @@ def parse_sim_time(stdout):
     print('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
     sys.exit(1)
 
+class histogram:
+    def __init__(self, df) -> None:
+        self.df = df
+        print(list(df.columns))
+        self.MinValue = df['BinsMinValue.u64'][0]
+        self.MaxValue = df['BinsMaxValue.u64'][0]
+        self.BinWidth = df['BinWidth.u32'][0]
+        self.TotalNumBins = df['TotalNumBins.u32'][0]
+        self.OOBMin = df['NumOutOfBounds-MinValue.u64'][0]
+        self.OOBMax = df['NumOutOfBounds-MaxValue.u64'][0]
+
+        self.data = []
+        for i in range(self.TotalNumBins):
+            self.data.append(df[f'Bin{i}:{self.MinValue + i*self.BinWidth}-{self.MinValue + (i+1)*self.BinWidth-1}.u64'][0])
+
+    def __repr__(self) -> str:
+        ret = 'Histogram: '
+        return str(self.data)
+
+def parse_statsfile(parrot_levels):
+    df = pd.read_csv('two-level-stats.csv', delimiter=', ')
+    #print(list(df.columns))
+    res = {}
+    for level in parrot_levels:
+        res[level] = histogram(df[df['ComponentName'] == f'Parrot_{level}'])
+    print(res)
+    return res
+
 class SimStats():
-    def __init__(self, command, prof_config):
+    def __init__(self, command, prof_config, parrot_levels):
 
         self.command = command
         self.prof_config = prof_config
+        self.parrot_levels = parrot_levels
         #print(f'PAT Command: {" ".join(command)}')
         #print(f'PAT Dir: {os.getcwd()}')
         subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True)
@@ -78,6 +108,9 @@ class SimStats():
         self.sim_time = parse_sim_time(subp.stdout)
         self.profile  = parse_profiling(subp.stdout, prof_config.keys())
         self.times    = parse_timing(subp.stderr)
+
+        # two-level.py will produce two-level-stats.csv with a latency histogram for each enabled parrot
+        self.latency = parse_statsfile(parrot_levels)
 
     def __repr__(self):
         s = ''
@@ -99,20 +132,20 @@ class SimStats():
 
         return s
 
-if __name__ == "__main__":
-
-    if len(sys.argv) < 4:
+def run(argv):
+    print(argv)
+    if len(argv) < 4:
         usage()
         sys.exit(1)
 
     # Check that config file exists
-    config_filename = sys.argv[1]
+    config_filename = argv[1]
     if (not os.path.exists(config_filename)):
         print(f'Can\'t find config file: {config_filename}')
         sys.exit(1)
 
     # Check that sdl file exists
-    sdl_filename = sys.argv[2]
+    sdl_filename = argv[2]
     if (not os.path.exists(sdl_filename)):
         print(f'Can\'t find sdl file: {sdl_filename}')
         sys.exit(1)
@@ -127,10 +160,10 @@ if __name__ == "__main__":
     # Parse which configs to run
     index = []
     all_indices = [*range(0, len(configs))]
-    if sys.argv[3] == 'all':
+    if argv[3] == 'all':
         index = all_indices
     else:
-        index = [int(i) for i in sys.argv[3].split(',')]
+        index = [int(i) for i in argv[3].split(',')]
         for i in index:
             if i not in [*range(0, len(configs))]:
                 print(f'Error: Specified index `{i}` out of range `{all_indices[0]}-{all_indices[-1]}`')
@@ -138,8 +171,8 @@ if __name__ == "__main__":
 
     # Parrots
     parrot_levels = ''
-    if len(sys.argv) > 4:
-        parrot_levels = sys.argv[4]
+    if len(argv) > 4:
+        parrot_levels = argv[4]
 
     print(f'index: {index}')
     print(f'parrot_levels: {parrot_levels}')
@@ -153,6 +186,7 @@ if __name__ == "__main__":
 
     prof_str = build_profiling_string(stats_dict)
 
+    st = {}
     for b in index:
         print(f'Simulating {b}')
         command = [
@@ -164,8 +198,10 @@ if __name__ == "__main__":
                    sdl_filename, '--', f'{config_filename}:{list(configs.keys())[b]} {parrot_levels}',
                   ]
         print(command)
-        st = SimStats(command, stats_dict)
-        print(st)
-        print('Simulation completed. Output is in run.out and run.err.')
+        st[list(configs.keys())[b]] = SimStats(command, stats_dict, parrot_levels.split(','))
+    return (st)
 
-print('Done.')
+if __name__ == "__main__":
+    st = run(sys.argv)
+    print(st)
+    print('Done')

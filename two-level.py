@@ -56,17 +56,27 @@ def parseConfig(argv):
 
 def enableStats():
       # Satatistics
-      for i in range(NCORES):
-            l1cache[i].enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
-      core.enableStatistics(['split_read_reqs'])
-      l2cache.enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
+      #for i in range(NCORES):
+      #      l1cache[i].enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
+      #core.enableStatistics(['split_read_reqs'])
+      #l2cache.enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
 
       # Define SST core options
       sst.setProgramOption('timebase', '1ps')
-      sst.setStatisticLoadLevel(9)
+      sst.setStatisticLoadLevel(10)
       #sst.enableAllStatisticsForAllComponents()
 
-      sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : os.path.join(wd,'spectest_stats.csv'), 'separator' : ', ' } )
+      # For MM, we found that no transaction took long than 1000ns. HBM access latency should be around 107ns (https://arxiv.org/pdf/2005.04324.pdf)
+      histParams = {
+            'type'     : 'sst.HistogramStatistic',
+            'minvalue' : '0',
+            'binwidth' : '10',
+            'numbins'  : '100',
+            'IncludeOutOfBounds' : '1'
+      }
+      sst.enableStatisticForComponentType('memHierarchy.Parrot', 'Latency', histParams)
+
+      sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : os.path.join(wd,'two-level-stats.csv'), 'separator' : ', ' } )
 
 params = {
       'core' : {
