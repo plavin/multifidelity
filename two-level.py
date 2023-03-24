@@ -52,7 +52,7 @@ def parseConfig(argv):
             usage()
 
       ariel_command = parseAriel(allconfig[bench]['cmd'])
-      return ariel_command, allconfig[bench]['directory']
+      return ariel_command, allconfig[bench]['directory'], bench
 
 def enableStats():
       # Satatistics
@@ -136,6 +136,7 @@ params = {
 
       'parrot' : {
             'clock' : CORE_FREQ,
+            'enable_tracing' : True,
       },
 }
 
@@ -160,7 +161,7 @@ if __name__ == '__main__':
                   print(f'Parrot level `{level}` not recognized!')
                   sys.exit(1)
 
-      ariel_command, directory = parseConfig(sys.argv)
+      ariel_command, directory, benchName = parseConfig(sys.argv)
       print(f'Ariel command: {ariel_command}')
       print(f'Ariel directory: {directory}')
 
@@ -196,8 +197,9 @@ if __name__ == '__main__':
       memctrl.addParams(params['memctrl'])
       backend.addParams(params['backend'])
 
-      for par in parrots.values():
-            par.addParams(params['parrot'])
+      for level in parrot_levels:
+            parrots[level].addParams(params['parrot'])
+            parrots[level].addParams({'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
 
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller

@@ -8,7 +8,7 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 
-STOP_AT = '4ms'
+STOP_AT = '5ms'
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
