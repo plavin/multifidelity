@@ -7,8 +7,11 @@ import subprocess
 from io import StringIO
 import pandas as pd
 import numpy as np
+import statistics
+import numericalunits as nu
 
 STOP_AT = '5ms'
+NRUNS = 5
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
@@ -42,6 +45,25 @@ def parse_profiling(stdout, prof_names):
         df[name] = pd.read_csv(StringIO('\n'.join(lines[start+1:end])))
     return df
 
+def parse_profiling_list(stdout_list, prof_names):
+    # TODO this function should aggregate this list
+    ret = []
+    for stdout in stdout_list:
+        ret.append(parse_profiling(stdout, prof_names))
+    return ret
+
+class RealTime:
+    def __init__(self, timings):
+        self.real = SimTime([float(a['real'])*nu.s for a in timings])
+        self.user = SimTime([float(a['user'])*nu.s for a in timings])
+        self.sys = SimTime([float(a['sys'])*nu.s for a in timings])
+    def __repr__(self):
+        ret = 'Wallclock Time:\n  '
+        ret = ret + 'Real: ' + str(self.real) + '\n  '
+        ret = ret + 'User: ' + str(self.user) + '\n  '
+        ret = ret + 'Sys:  ' + str(self.sys)
+        return ret
+
 def parse_timing(stderr):
     # times are reported in seconds
     lines = stderr.split('\n')
@@ -57,41 +79,74 @@ def parse_timing(stderr):
             print(f'Error: Unable to parse `{lab}` time')
     return times
 
+def parse_timing_list(stderr_list):
+    # TODO this function should aggregate this list
+    ret = []
+    for stderr in stderr_list:
+        ret.append(parse_timing(stderr))
+
+    return RealTime(ret)
+
+class SimTime:
+    def __init__(self, times):
+        self.mean = statistics.mean(times)
+        self.stdev = statistics.stdev(times)
+    def __repr__(self):
+        return f'{self.mean/nu.ms:.2f} (+/-{self.stdev/nu.ms:.2f}) ms'
+
+class SummaryRate:
+    def __init__(self, times, unit):
+        self.mean = statistics.harmonic_mean(times)
+        self.stdev = statistics.stdev(times)
+        self.unit = unit
+    def __repr__(self):
+        return f'{self.mean:.3f} (+/-{self.stdev:.3f}) {self.unit}'
+
 def parse_sim_time(stdout):
     lines = stdout.split('\n')
     for l in lines:
         if 'Simulation is complete' in l:
-            return l.split()[5:7]
+            tm = l.split()[5:7]
+            if tm[1] != 'ms':
+                print(f'Error: Unrecognized time unit: {tm[1]}')
+                sys.exit(1)
+            return float(tm[0]) * nu.ms
     print('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
     sys.exit(1)
+
+def parse_sim_time_list(stdout_list):
+    times = []
+    for stdout in stdout_list:
+        times.append(parse_sim_time(stdout))
+    return SimTime(times)
 
 class histogram:
     def __init__(self, df) -> None:
         self.df = df
-        print(list(df.columns))
-        self.MinValue = df['BinsMinValue.u64'][0]
-        self.MaxValue = df['BinsMaxValue.u64'][0]
-        self.BinWidth = df['BinWidth.u32'][0]
-        self.TotalNumBins = df['TotalNumBins.u32'][0]
-        self.OOBMin = df['NumOutOfBounds-MinValue.u64'][0]
-        self.OOBMax = df['NumOutOfBounds-MaxValue.u64'][0]
+        self.MinValue = list(df['BinsMinValue.u64'])[0]
+        self.MaxValue = list(df['BinsMaxValue.u64'])[0]
+        self.BinWidth = list(df['BinWidth.u32'])[0]
+        self.TotalNumBins = list(df['TotalNumBins.u32'])[0]
+        self.OOBMin = list(df['NumOutOfBounds-MinValue.u64'])[0]
+        self.OOBMax = list(df['NumOutOfBounds-MaxValue.u64'])[0]
+
 
         self.data = []
         for i in range(self.TotalNumBins):
-            self.data.append(df[f'Bin{i}:{self.MinValue + i*self.BinWidth}-{self.MinValue + (i+1)*self.BinWidth-1}.u64'][0])
+            self.data.append(list(df[f'Bin{i}:{self.MinValue + i*self.BinWidth}-{self.MinValue + (i+1)*self.BinWidth-1}.u64'])[0])
 
     def __repr__(self) -> str:
         ret = 'Histogram: '
         return str(self.data)
 
 def parse_statsfile(parrot_levels):
-    df = pd.read_csv('two-level-stats.csv', delimiter=', ')
-    #print(list(df.columns))
+    df = pd.read_csv('two-level-stats.csv', delimiter=', ', engine='python')
     res = {}
     for level in parrot_levels:
         res[level] = histogram(df[df['ComponentName'] == f'Parrot_{level}'])
-    print(res)
-    return res
+    instr_count = list(df[(df['ComponentName']=='Ariel') & (df['StatisticName']=='instruction_count')]['Count.u64'])[0]
+    cycles = list(df[(df['ComponentName']=='Ariel') & (df['StatisticName']=='cycles')]['Count.u64'])[0]
+    return res, instr_count/cycles
 
 class SimStats():
     def __init__(self, command, prof_config, parrot_levels):
@@ -101,34 +156,45 @@ class SimStats():
         self.parrot_levels = parrot_levels
         #print(f'PAT Command: {" ".join(command)}')
         #print(f'PAT Dir: {os.getcwd()}')
-        subp = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True)
+        subp = []
+        self.latency = []
+        self.ipc = []
+        for i in range(NRUNS):
+            print(f'{i+1}/{NRUNS}', end=' ')
+            sys.stdout.flush()
+            subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
+            # TODO: do data aggregation for latency
+            latency_hist, ipc = parse_statsfile(parrot_levels)
+            self.latency.append(latency_hist)
+            self.ipc.append(ipc)
+        print()
 
-        self.stdout = subp.stdout
-        self.stderr = subp.stderr
-        self.sim_time = parse_sim_time(subp.stdout)
-        self.profile  = parse_profiling(subp.stdout, prof_config.keys())
-        self.times    = parse_timing(subp.stderr)
-
-        # two-level.py will produce two-level-stats.csv with a latency histogram for each enabled parrot
-        self.latency = parse_statsfile(parrot_levels)
+        #self.stdout = subp.stdout
+        #self.stderr = subp.stderr
+        self.sim_time = parse_sim_time_list([sp.stdout for sp in subp])
+        self.profile  = parse_profiling_list([sp.stdout for sp in subp], prof_config.keys())
+        self.times    = parse_timing_list([sp.stderr for sp in subp])
+        self.IPC      = SummaryRate(self.ipc, 'ipc')
 
     def __repr__(self):
         s = ''
 
         # Simulated time
-        s += f'Simulated time: {" ".join(self.sim_time)}\n\n'
+        s += f'Simulated time:\n  {self.sim_time}\n'
 
         # Profiling data
-        for name, df in self.profile.items():
-            s += (f'Profiler: {name}\n')
-            s += str(df)
-            s += '\n'
+        # TODO: Add this back in
+        #for name, df in self.profile.items():
+        #    s += (f'Profiler: {name}\n')
+        #    s += str(df)
+        #    s += '\n'
 
         # Data from `time` command
-        if len(self.times) > 0:
-            s += '\nTiming (seconds)\n'
-            for l, t in self.times.items():
-                s += f' {l}:\t{t}\n'
+        s += str(self.times)
+        s += '\n'
+
+        s += 'Simulated IPC:\n  '
+        s += str(self.IPC)
 
         return s
 
@@ -197,11 +263,13 @@ def run(argv):
                    prof_str,
                    sdl_filename, '--', f'{config_filename}:{list(configs.keys())[b]} {parrot_levels}',
                   ]
-        print(command)
+        #print(command)
         st[list(configs.keys())[b]] = SimStats(command, stats_dict, parrot_levels.split(','))
     return (st)
 
 if __name__ == "__main__":
     st = run(sys.argv)
-    print(st)
+    for key in st:
+        print(f'{key}:')
+        print(st[key])
     print('Done')

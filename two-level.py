@@ -75,6 +75,8 @@ def enableStats():
             'IncludeOutOfBounds' : '1'
       }
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'Latency', histParams)
+      sst.enableStatisticForComponentType('ariel.ariel', 'instruction_count')
+      sst.enableStatisticForComponentType('ariel.ariel', 'cycles')
 
       sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : os.path.join(wd,'two-level-stats.csv'), 'separator' : ', ' } )
 
@@ -136,7 +138,6 @@ params = {
 
       'parrot' : {
             'clock' : CORE_FREQ,
-            'enable_tracing' : True,
       },
 }
 
@@ -199,7 +200,9 @@ if __name__ == '__main__':
 
       for level in parrot_levels:
             parrots[level].addParams(params['parrot'])
-            parrots[level].addParams({'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+      # TODO: add command line option for this
+      #      parrots[level].addParams({'enable_tracing' : True,
+      #                                'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
 
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
