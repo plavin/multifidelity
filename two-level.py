@@ -52,7 +52,17 @@ def parseConfig(argv):
             usage()
 
       ariel_command = parseAriel(allconfig[bench]['cmd'])
-      return ariel_command, allconfig[bench]['directory'], bench
+
+      # If the workload has markers, we set mode to 0 to scope the simulation
+      ariel_markers = False
+      if 'ariel_markers' in allconfig[bench]:
+            ariel_markers = allconfig[bench]['ariel_markers']
+      if (ariel_markers):
+            arielmode=0
+      else:
+            arielmode=1
+
+      return ariel_command, allconfig[bench]['directory'], bench, arielmode
 
 def enableStats():
       # Satatistics
@@ -101,7 +111,7 @@ params = {
             'cache_line_size'       : CACHE_LINE_BYTES,
             'coherence_protocol'    : COHERENCE,
             'replacement_policy'    : REPLACEMENT,
-            'l1prefetcher'            : 'cassini.StridePrefetcher',
+#            'l1prefetcher'            : 'cassini.StridePrefetcher',
             'debug'                 : '0',
             'banks'                 : '8',
       },
@@ -113,7 +123,7 @@ params = {
             'coherence_protocol'    : COHERENCE,
             'associativity'         : '4',
             'cache_line_size'       : CACHE_LINE_BYTES,
-            'prefetcher'            : 'cassini.StridePrefetcher',
+#            'prefetcher'            : 'cassini.StridePrefetcher',
             'debug'                 : '0',
             'L1'                    : '0',
             'cache_size'            : '1MiB',
@@ -162,7 +172,7 @@ if __name__ == '__main__':
                   print(f'Parrot level `{level}` not recognized!')
                   sys.exit(1)
 
-      ariel_command, directory, benchName = parseConfig(sys.argv)
+      ariel_command, directory, benchName, arielmode = parseConfig(sys.argv)
       print(f'Ariel command: {ariel_command}')
       print(f'Ariel directory: {directory}')
 
@@ -173,7 +183,9 @@ if __name__ == '__main__':
 
       # Print run information
       print(f'sdl: {sys.argv}')
-      print(f'ariel command: {ariel_command}')
+
+      # Set param based on value from workload file
+      params['core']['arielmode'] = arielmode
 
       # Make simulation objects
       core    = sst.Component('Ariel', 'ariel.ariel')
@@ -201,12 +213,13 @@ if __name__ == '__main__':
       for level in parrot_levels:
             parrots[level].addParams(params['parrot'])
       # TODO: add command line option for this
-      #      parrots[level].addParams({'enable_tracing' : True,
-      #                                'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+            #parrots[level].addParams({'enable_tracing' : True,
+            #                          'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
 
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
       if (len(parrots) > 0):
+            #core.addParams({'manual_pd':True})
             core.addParams({'phase_detection':True})
 
       # By default, the Parrots will not foward the phase messages

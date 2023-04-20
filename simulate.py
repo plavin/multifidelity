@@ -10,8 +10,8 @@ import numpy as np
 import statistics
 import numericalunits as nu
 
-STOP_AT = '5ms'
-NRUNS = 5
+STOP_AT = '10ms'
+NRUNS = 1
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
@@ -90,14 +90,20 @@ def parse_timing_list(stderr_list):
 class SimTime:
     def __init__(self, times):
         self.mean = statistics.mean(times)
-        self.stdev = statistics.stdev(times)
+        if len(times) > 1:
+            self.stdev = statistics.stdev(times)
+        else:
+            self.stdev = 0
     def __repr__(self):
         return f'{self.mean/nu.ms:.2f} (+/-{self.stdev/nu.ms:.2f}) ms'
 
 class SummaryRate:
     def __init__(self, times, unit):
         self.mean = statistics.harmonic_mean(times)
-        self.stdev = statistics.stdev(times)
+        if len(times) > 1:
+            self.stdev = statistics.stdev(times)
+        else:
+            self.stdev = 0
         self.unit = unit
     def __repr__(self):
         return f'{self.mean:.3f} (+/-{self.stdev:.3f}) {self.unit}'
