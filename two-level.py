@@ -213,14 +213,15 @@ if __name__ == '__main__':
       for level in parrot_levels:
             parrots[level].addParams(params['parrot'])
       # TODO: add command line option for this
-            #parrots[level].addParams({'enable_tracing' : True,
-            #                          'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+            parrots[level].addParams({'enable_tracing' : True,
+                                      'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
 
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
       if (len(parrots) > 0):
             #core.addParams({'manual_pd':True})
-            core.addParams({'phase_detection':True})
+            #core.addParams({'phase_detection':True})
+            pass
 
       # By default, the Parrots will not foward the phase messages
       # but if we have more than one, we need the higher levels to

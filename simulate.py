@@ -10,8 +10,8 @@ import numpy as np
 import statistics
 import numericalunits as nu
 
-STOP_AT = '10ms'
-NRUNS = 1
+STOP_AT = '100ms'
+NRUNS = 2
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
@@ -185,15 +185,16 @@ class SimStats():
     def __repr__(self):
         s = ''
 
+        # Profiling data
+        # TODO: Add this back in
+        for name, df in self.profile[0].items():
+            s += (f'Profiler: {name}\n')
+            s += str(df)
+            s += '\n'
+
         # Simulated time
         s += f'Simulated time:\n  {self.sim_time}\n'
 
-        # Profiling data
-        # TODO: Add this back in
-        #for name, df in self.profile.items():
-        #    s += (f'Profiler: {name}\n')
-        #    s += str(df)
-        #    s += '\n'
 
         # Data from `time` command
         s += str(self.times)
@@ -260,7 +261,7 @@ def run(argv):
 
     st = {}
     for b in index:
-        print(f'Simulating {b}')
+        print(f'Simulating {b} [{list(configs.keys())[b]}]')
         command = [
                   'time', '-p',
                    '/nethome/plavin3/sst/install/bin/sst',
@@ -276,6 +277,6 @@ def run(argv):
 if __name__ == "__main__":
     st = run(sys.argv)
     for key in st:
-        print(f'{key}:')
+        print(f'\n{key} ' + '-'*30)
         print(st[key])
     print('Done')
