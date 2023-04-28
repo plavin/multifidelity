@@ -11,7 +11,7 @@ import statistics
 import numericalunits as nu
 
 STOP_AT = '100ms'
-NRUNS = 2
+NRUNS = 1
 
 def usage():
     print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')

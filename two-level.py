@@ -220,7 +220,7 @@ if __name__ == '__main__':
       # otherwise the phase message will break the memory controller
       if (len(parrots) > 0):
             #core.addParams({'manual_pd':True})
-            #core.addParams({'phase_detection':True})
+            core.addParams({'phase_detection':True})
             pass
 
       # By default, the Parrots will not foward the phase messages
