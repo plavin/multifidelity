@@ -52,9 +52,14 @@ if __name__ == "__main__":
     tests.append(np.all(win.get(0) == np.array([i for i in range(10)])))
     tests.append((np.all(win.get_range(0, 1) == np.array([i for i in range(20)]))))
     tests.append((win.get_point(5) == (50, 50)))
-    print(tests)
     win.shift_and_grow(1, 1)
-    print(np.all(win.get(0) == np.array([i for i in range(10, 21)])))
+    tests.append(np.all(win.get(0) == np.array([i for i in range(10, 21)])))
     win.shift_and_reset(1, 10)
-    print(np.all(win.get(0) == np.array([i for i in range(21, 31)])))
-    print('Tests passed!')
+    tests.append(np.all(win.get(0) == np.array([i for i in range(21, 31)])))
+
+    if np.all(tests):
+        print('Tests passed!')
+    else:
+        for i, result in enumerate(tests):
+            if not result:
+                print(f'Test {i} failed')
