@@ -33,7 +33,10 @@ class Window:
 
     def get_point(self, pt):
         # Return the location and value of the point
-        return pt*self.size, self.data[pt*self.size]
+        try:
+            return pt*self.size, self.data[pt*self.size]
+        except:
+            return None
 
     def shift_and_grow(self,shift, grow):
         # shift units: how many windows to shift by
