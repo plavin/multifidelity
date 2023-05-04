@@ -95,9 +95,11 @@ params = {
             'verbose'        : 0,
             'corecount'      : NCORES,
             'cachelinesize'  : CACHE_LINE_BYTES,
-            'envparamcount'  : 1,
+            'envparamcount'  : 2,
             'envparamname0'  : 'OMP_NUM_THREADS',
             'envparamval0'   : str(NCORES),
+            'envparamname1'  : 'LD_LIBRARY_PATH',
+            'envparamval1'    : '/nethome/plavin3/sst/sst-tools/tools/ariel/api:/nethome/plavin3/sst/DRAMsim3-1.0.0:/nethome/plavin3/sst/pin-3.23/intel64/lib:/usr/lib64/openmpi/lib:/nethome/plavin3/sst/sst-tools/tools/ariel/api:/nethome/plavin3/sst/DRAMsim3-1.0.0:/nethome/plavin3/sst/pin-3.23/intel64/lib:/usr/lib64/openmpi/lib:/opt/slurm/current/lib',
             'clock'          : CORE_FREQ,
             'arielmode'      : 1,
       },
@@ -219,9 +221,9 @@ if __name__ == '__main__':
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
       if (len(parrots) > 0):
-            #core.addParams({'manual_pd':True})
-            core.addParams({'phase_detection':True})
-            pass
+            core.addParams({'manual_pd':True})
+            #core.addParams({'phase_detection':True})
+            #pass
 
       # By default, the Parrots will not foward the phase messages
       # but if we have more than one, we need the higher levels to
