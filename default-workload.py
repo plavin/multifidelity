@@ -7,4 +7,5 @@
 
 {
     'mm' : { 'cmd': 'mm 15  5', 'directory': './'},
+    'mm2' : { 'cmd': 'mm 20  5', 'directory': './'},
  }

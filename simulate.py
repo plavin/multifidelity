@@ -9,14 +9,9 @@ import pandas as pd
 import numpy as np
 import statistics
 import numericalunits as nu
+import SimulationArgs
 
 STOP_AT = '100ms'
-NRUNS = 1
-
-def usage():
-    print(f'Usage: {sys.argv[0]} <config dict file> <sdl file> [index,[index,...]] [parrot,[parrot,...]]')
-    print('The first argument is the output of ./generate.py')
-    print('Specify indices benchmarks to run. Specify `all` to run all benchmarks in config file.')
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -155,7 +150,7 @@ def parse_statsfile(parrot_levels):
     return res, instr_count/cycles
 
 class SimStats():
-    def __init__(self, command, prof_config, parrot_levels):
+    def __init__(self, command, prof_config, parrot_levels, nruns):
 
         self.command = command
         self.prof_config = prof_config
@@ -165,14 +160,16 @@ class SimStats():
         subp = []
         self.latency = []
         self.ipc = []
-        for i in range(NRUNS):
-            print(f'{i+1}/{NRUNS}', end=' ')
+        self.nruns = nruns
+        for i in range(self.nruns):
+            print(f'{i+1}/{self.nruns}', end=' ')
             sys.stdout.flush()
             subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
             # TODO: do data aggregation for latency
-            latency_hist, ipc = parse_statsfile(parrot_levels)
-            self.latency.append(latency_hist)
-            self.ipc.append(ipc)
+            if len(parrot_levels) > 0:
+                latency_hist, ipc = parse_statsfile(parrot_levels)
+                self.latency.append(latency_hist)
+                self.ipc.append(ipc)
         print()
 
         #self.stdout = subp.stdout
@@ -187,10 +184,14 @@ class SimStats():
 
         # Profiling data
         # TODO: Add this back in
-        for name, df in self.profile[0].items():
-            s += (f'Profiler: {name}\n')
-            s += str(df)
-            s += '\n'
+        with pd.option_context('display.max_rows', None,
+                               'display.max_columns', None,
+                               'display.precision', 3,
+                              ):
+            for name, df in self.profile[0].items():
+                s += (f'Profiler: {name}\n')
+                s += str(df)
+                s += '\n'
 
         # Simulated time
         s += f'Simulated time:\n  {self.sim_time}\n'
@@ -206,50 +207,8 @@ class SimStats():
         return s
 
 def run(argv):
-    print(argv)
-    if len(argv) < 4:
-        usage()
-        sys.exit(1)
-
-    # Check that config file exists
-    config_filename = argv[1]
-    if (not os.path.exists(config_filename)):
-        print(f'Can\'t find config file: {config_filename}')
-        sys.exit(1)
-
-    # Check that sdl file exists
-    sdl_filename = argv[2]
-    if (not os.path.exists(sdl_filename)):
-        print(f'Can\'t find sdl file: {sdl_filename}')
-        sys.exit(1)
-
-    # Parse configs
-    configs = get_configs(config_filename)
-    if len(configs) < 1:
-        print(f'No configs parsed.')
-        sys.exit(1)
-
-
-    # Parse which configs to run
-    index = []
-    all_indices = [*range(0, len(configs))]
-    if argv[3] == 'all':
-        index = all_indices
-    else:
-        index = [int(i) for i in argv[3].split(',')]
-        for i in index:
-            if i not in [*range(0, len(configs))]:
-                print(f'Error: Specified index `{i}` out of range `{all_indices[0]}-{all_indices[-1]}`')
-                sys.exit(1)
-
-    # Parrots
-    parrot_levels = ''
-    if len(argv) > 4:
-        parrot_levels = argv[4]
-
-    print(f'index: {index}')
-    print(f'parrot_levels: {parrot_levels}')
-
+    sim_args = SimulationArgs.parse(argv)
+    print(sim_args)
 
     # Run specified simulations
     stats_dict = {
@@ -260,18 +219,37 @@ def run(argv):
     prof_str = build_profiling_string(stats_dict)
 
     st = {}
-    for b in index:
-        print(f'Simulating {b} [{list(configs.keys())[b]}]')
+    for bb in sim_args.benchmarks:
+        print(f'Simulating [{bb}] [{sim_args.nruns} times] ', end='')
+        sys.stdout.flush()
+
+        sdl_args = [str(sim_args.config_file), str(bb)]
+        if sim_args.parrot_levels != '':
+            sdl_args.append('-p')
+            sdl_args.append(str(sim_args.parrot_levels))
+        if sim_args.trace:
+            sdl_args.append('-t')
+        if sim_args.rrfile:
+            sdl_args.append('-r')
+            sdl_args.append(str(sim_args.rrfile.resolve()))
+
+
         command = [
                   'time', '-p',
                    '/nethome/plavin3/sst/install/bin/sst',
                    '--stop-at', STOP_AT,
                    #'--exit-after=0:0:10',
                    prof_str,
-                   sdl_filename, '--', f'{config_filename}:{list(configs.keys())[b]} {parrot_levels}',
+                   str(sim_args.sdl), '--',
+                   *sdl_args
                   ]
         #print(command)
-        st[list(configs.keys())[b]] = SimStats(command, stats_dict, parrot_levels.split(','))
+        #print(' '.join(command))
+        if sim_args.parrot_levels != '':
+            parrot_list = sim_args.parrot_levels.split(',')
+        else:
+            parrot_list = []
+        st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
     return (st)
 
 if __name__ == "__main__":

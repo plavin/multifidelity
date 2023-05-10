@@ -1,7 +1,10 @@
-import sst
-from ariel_utils import parseAriel
 import sys
 import os
+import sst
+from ariel_utils import parseAriel
+import SimulationArgs
+import argparse
+
 
 # Globals
 NCORES            = 1
@@ -30,14 +33,7 @@ def usage():
       print('parrot_levels is a comma-separated list of levels above which a parrot will be placed, e.g. l1,l2,mem')
       sys.exit(1)
 
-def parseConfig(argv):
-      split = argv[1].split(':')
-      if len(split) < 2:
-            print('Error: unable to parse config')
-            usage()
-
-      config_filename = split[0]
-      bench = split[1]
+def parseConfig(config_filename, bench):
 
       if not os.path.isfile(config_filename):
             print(f'Error: config file `{config_filename}` not found')
@@ -62,7 +58,7 @@ def parseConfig(argv):
       else:
             arielmode=1
 
-      return ariel_command, allconfig[bench]['directory'], bench, arielmode
+      return ariel_command, allconfig[bench]['directory'], arielmode
 
 def enableStats():
       # Satatistics
@@ -156,17 +152,21 @@ params = {
 
 if __name__ == '__main__':
 
-      if (len(sys.argv) < 2):
-            print('Error: Too few args')
-            usage()
-
       if os.getenv('DRAMSIM3_HOME') is None:
             print('Error: DRAMSIM3_HOME not found in environment')
             sys.exit(1)
 
+      parser = argparse.ArgumentParser()
+      parser.add_argument('config_file', help='file with configs')
+      parser.add_argument('benchmark', help='benchmark rom config file to run')
+      parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
+      parser.add_argument('-t', '--trace', help='enable tracing', action="store_true")
+      parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
+      args = parser.parse_args(sys.argv[1:])
+
       parrot_levels = []
-      if len(sys.argv) >= 3:
-            parrot_levels = sys.argv[2].split(',')
+      if args.parrot_levels is not None:
+            parrot_levels = args.parrot_levels.split(',')
             print(f'parrot levels: {parrot_levels}')
 
       for level in parrot_levels:
@@ -174,7 +174,13 @@ if __name__ == '__main__':
                   print(f'Parrot level `{level}` not recognized!')
                   sys.exit(1)
 
-      ariel_command, directory, benchName, arielmode = parseConfig(sys.argv)
+      benchName = args.benchmark
+      ariel_command, directory, arielmode = parseConfig(args.config_file, args.benchmark)
+      #print(ariel_command)
+      #print(directory)
+      #print(arielmode)
+      #panic
+
       print(f'Ariel command: {ariel_command}')
       print(f'Ariel directory: {directory}')
 
@@ -214,9 +220,12 @@ if __name__ == '__main__':
 
       for level in parrot_levels:
             parrots[level].addParams(params['parrot'])
-      # TODO: add command line option for this
-            parrots[level].addParams({'enable_tracing' : True,
-                                      'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+
+            if args.trace:
+                  parrots[level].addParams({'enable_tracing' : True,
+                                            'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+            if args.rrfile is not None:
+                   parrots[level].addParams({'rr_temp' : f'{args.rrfile} {benchName}'})
 
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
