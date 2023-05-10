@@ -1,0 +1,42 @@
+sdl_path two-level.py
+False
+Simulation Configuration:
+ config:        30 configs (polybench-workloads.py)
+ benchmarks:    ['2mm']
+ parrot_levels: l1
+ nruns:         5
+ trace:         False
+ sdl:           two-level.py
+ rrfile:        stable-phases.txt
+ outfile:       None
+Simulating [2mm] [5 times] 1/5 2/5 3/5 4/5 5/5 
+
+2mm ------------------------------
+Profiler: ClockStats
+                         Name      count   handler time (s)  \
+0                 ariel.ariel  199999999            447.245   
+1            memHierarchy.Bus    1583537              1.016   
+2          memHierarchy.Cache    9645163             23.274   
+3  memHierarchy.MemController   49999999             98.160   
+4         memHierarchy.Parrot  128668115             12.628   
+
+    avg. handler time (ns)  
+0                     2236  
+1                      641  
+2                     2412  
+3                     1963  
+4                       98  
+Profiler: EventStats
+                   Name   recv count   recv time (s)   avg. recv time (ns)
+0      memHierarchy.Bus       372803           0.031                    84
+1  memHierarchy.MemLink     92294110         181.584                  1967
+2   memHierarchy.Parrot    176647558          38.310                   216
+Simulated time:
+  100.00 (+/-0.00) ms
+Wallclock Time:
+  Real: 630790.00 (+/-128825.09) ms
+  User: 614058.00 (+/-117912.49) ms
+  Sys:  14382.00 (+/-10536.89) ms
+Simulated IPC:
+  0.587 (+/-0.152) ipc
+Done
