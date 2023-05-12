@@ -1,0 +1,42 @@
+sdl_path two-level.py
+False
+Simulation Configuration:
+ config:        30 configs (polybench-workloads.py)
+ benchmarks:    ['floyd-warshall']
+ parrot_levels: l1
+ nruns:         5
+ trace:         False
+ sdl:           two-level.py
+ rrfile:        None
+ outfile:       None
+Simulating [floyd-warshall] [5 times] 1/5 2/5 3/5 4/5 5/5 
+
+floyd-warshall ------------------------------
+Profiler: ClockStats
+                         Name      count   handler time (s)  \
+0                 ariel.ariel  199999999            394.959   
+1            memHierarchy.Bus    4394964              2.314   
+2          memHierarchy.Cache  157147967            386.095   
+3  memHierarchy.MemController   49999999             99.085   
+4         memHierarchy.Parrot  111066831             18.640   
+
+    avg. handler time (ns)  
+0                     1974  
+1                      526  
+2                     2456  
+3                     1981  
+4                      167  
+Profiler: EventStats
+                   Name   recv count   recv time (s)   avg. recv time (ns)
+0      memHierarchy.Bus       779480           0.074                    94
+1  memHierarchy.MemLink    137832213         302.123                  2191
+2   memHierarchy.Parrot    137012259          14.976                   109
+Simulated time:
+  100.00 (+/-0.00) ms
+Wallclock Time:
+  Real: 1270666.00 (+/-150467.89) ms
+  User: 1227476.00 (+/-135456.42) ms
+  Sys:  39360.00 (+/-16130.74) ms
+Simulated IPC:
+  0.769 (+/-0.092) ipc
+Done
