@@ -14,6 +14,7 @@ class SimulationArgs:
     parrot_levels: str    = ''
     nruns: int            = 1
     trace: bool           = False
+    stop_at: str           = None
     rrfile: pathlib.Path  = None
     sdl: pathlib.Path     = None
     outfile: pathlib.Path = None
@@ -32,6 +33,7 @@ class SimulationArgs:
         s += f' parrot_levels: {self.parrot_levels}\n'
         s += f' nruns:         {self.nruns}\n'
         s += f' trace:         {self.trace}\n'
+        s += f' stop_at:       {self.stop_at}\n'
         s += f' sdl:           {self.sdl}\n'
         s += f' rrfile:        {self.rrfile}\n'
         s += f' outfile:       {self.outfile}'
@@ -49,6 +51,7 @@ def parse(argv):
     parser.add_argument('-t', '--trace', help='enable tracing', required=False, action="store_true")
     parser.add_argument('-o', '--outfile', help='file to print to', type=str, required=False, default=None)
     parser.add_argument('-r', '--rrfile', help='file to read representative regions from', type=str, required=False, default=None)
+    parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, default=None, dest='stop_at')
 
     args = parser.parse_args(argv[1:])
 
@@ -93,7 +96,8 @@ def parse(argv):
                           trace = args.trace,
                           sdl = sdl_path,
                           outfile = outfile_path,
-                          rrfile = rr_path)
+                          rrfile = rr_path,
+                          stop_at = args.stop_at)
 
 if __name__ == '__main__':
     print(parse(sys.argv))

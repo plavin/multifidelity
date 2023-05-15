@@ -11,8 +11,6 @@ import statistics
 import numericalunits as nu
 import SimulationArgs
 
-STOP_AT = '100ms'
-
 def build_profiling_string(profilers):
     if len(profilers) < 1:
         return ''
@@ -210,6 +208,10 @@ def run(argv):
     sim_args = SimulationArgs.parse(argv)
     print(sim_args)
 
+    stop_at = '100ms'
+    if sim_args.stop_at is not None:
+        stop_at = sim_args.stop_at
+
     # Run specified simulations
     stats_dict = {
                   'ClockStats' : 'sst.profile.handler.clock.time.high_resolution(level=type)[clock]',
@@ -237,7 +239,7 @@ def run(argv):
         command = [
                   'time', '-p',
                    '/nethome/plavin3/sst/install/bin/sst',
-                   '--stop-at', STOP_AT,
+                   '--stop-at', stop_at,
                    #'--exit-after=0:0:10',
                    prof_str,
                    str(sim_args.sdl), '--',
