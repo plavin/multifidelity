@@ -116,4 +116,4 @@ class PhaseDetector {
         }
 };
 
-std::map<uint64_t, int64_t> detect(std::vector<uint64_t>);
+std::map<uint64_t, int64_t> run_pd(std::vector<uint64_t>, double, uint32_t, uint32_t, uint32_t);

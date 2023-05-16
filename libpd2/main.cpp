@@ -13,7 +13,7 @@ int main() {
 
     std::iota(addrs.begin(), addrs.end(), 1);
 
-    std::map<uint64_t, int64_t> phase_changes = detect(addrs, threshold, interval_len, log2_signature_len, drop_bits);
+    std::map<uint64_t, int64_t> phase_changes = run_pd(addrs, threshold, interval_len, log2_signature_len, drop_bits);
 
     for (const auto& pair : phase_changes) {
         std::cout << pair.first << ": " << pair.second << std::endl;

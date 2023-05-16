@@ -1,1 +1,3 @@
 main
+libpd.so
+phase_detector.o
