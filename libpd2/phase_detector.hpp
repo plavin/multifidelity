@@ -52,10 +52,68 @@ class PhaseDetector {
             sig = boost::dynamic_bitset<>(signature_len);
         }
 
-        std::map<uint64_t, int64_t> detect(std::vector<uint64_t> x) {
-            std::map<uint64_t, int64_t> phase_change;
-            phase_change[10] = -1;
-            return phase_change;
-        }
+        bitvec make_sig(std::vector<uint64_t>::iterator start, std::vector<uint64_t>::iterator end) {
+            bitvec bv(signature_len);
+            for (auto it = start; it != end; it++) {
+                bv[hash_address(*it)] = 1;
+            }
+            return bv;
+        };
 
+        std::map<uint64_t, int64_t> detect(std::vector<uint64_t> xs) {
+
+            // Map of phase changes
+            std::map<uint64_t, int64_t> phase_changes;
+            phase_changes[0] = -1; // Start in transition phase
+
+            uint64_t nintervals = xs.size() / interval_len;
+            std::vector<bitvec> sigs(nintervals);
+
+            // Pre-compute all signatures since this is easy to do in parallel
+#pragma omp parallel for
+            for (uint64_t i = 0; i < nintervals; i++) {
+                sigs[i] = make_sig(xs.begin()+i*interval_len, xs.begin()+(i+1)*interval_len);
+            }
+
+            int stable_count = 0;
+            int phase = -1;
+            int last_phase = -1;
+            std::vector<bitvec> phase_table;
+
+            for (uint64_t i = 1; i < nintervals; i++) {
+
+				if (diff_sig(sigs[i-1], sigs[i]) < threshold) {
+                    stable_count += 1;
+                    if (stable_count >= stable_min && phase == -1) {
+                        phase_table.push_back(sigs[i]);
+                        phase = phase_table.size() - 1;
+                    }
+                } else {
+                    stable_count = 0;
+                    phase = -1;
+
+                    if (!phase_table.empty()) {
+                        double best_diff = threshold;
+                        for (auto it = phase_table.begin(); it!=phase_table.end(); it++) {
+                            double diff = diff_sig(sigs[i], *it);
+                            if (diff < best_diff) {
+                                phase = std::distance(phase_table.begin(), it);
+                                best_diff = diff;
+                            }
+                        }
+                    }
+
+                }
+
+                if (phase != last_phase) {
+                    phase_changes[i*interval_len] = phase;
+                }
+                last_phase = phase;
+
+            }
+
+            return phase_changes;
+        }
 };
+
+std::map<uint64_t, int64_t> detect(std::vector<uint64_t>);

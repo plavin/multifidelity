@@ -1,16 +1,8 @@
-#include <cstdio>
-#include <iostream>
 #include "phase_detector.hpp"
 
-int main ()
-{
-    PhaseDetector pd(0.5, 10, 10, 3);
+// Simplifed interfact to make it easier to call from Python
+std::map<uint64_t, int64_t> detect(std::vector<uint64_t> addrs, double threshold, uint32_t interval_len, uint32_t log2_signature_len, uint32_t drop_bits) {
 
-    std::vector<uint64_t> test_addrs(10, 0);
-
-    std::map<uint64_t, int64_t> phase_changes = pd.detect(test_addrs);
-    for (const auto& pair : phase_changes) {
-        std::cout << pair.first << ": " << pair.second << std::endl;
-    }
-
+    PhaseDetector pd(threshold, interval_len, log2_signature_len, drop_bits);
+    return pd.detect(addrs);
 }
