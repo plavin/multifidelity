@@ -1,3 +1,4 @@
+#include <pybind11/pybind11.h>
 #include "phase_detector.hpp"
 
 // Simplifed interfact to make it easier to call from Python
