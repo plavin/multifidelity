@@ -1,6 +1,7 @@
 #include <cmath>
 #include <map>
 #include <boost/dynamic_bitset.hpp>
+#include <iostream>
 
 using bitvec = boost::dynamic_bitset<>;
 
@@ -42,14 +43,22 @@ class PhaseDetector {
         }
 
     public:
-        PhaseDetector(float threshold, uint32_t interval_len, uint32_t log2_signature_len, uint32_t drop_bits) :
+        PhaseDetector(float threshold, uint32_t interval_len, uint32_t log2_signature_len, uint32_t stable_min) :
             threshold(threshold),
             interval_len(interval_len),
             log2_signature_len(log2_signature_len),
-            drop_bits(drop_bits)
+            stable_min(stable_min)
         {
             signature_len = pow(2, log2_signature_len);
-            sig = boost::dynamic_bitset<>(signature_len);
+            drop_bits = 3;
+            /*
+            std::cout << "threshold: " << threshold << std::endl;
+            std::cout << "interval_len: " << interval_len << std::endl;
+            std::cout << "log2_signature_len: " << log2_signature_len << std::endl;
+            std::cout << "signature_len: " << signature_len << std::endl;
+            std::cout << "stable_min: " << stable_min << std::endl;
+            std::cout << "drop_bits: " << drop_bits << std::endl;
+            */
         }
 
         bitvec make_sig(std::vector<uint64_t>::iterator start, std::vector<uint64_t>::iterator end) {
@@ -64,7 +73,7 @@ class PhaseDetector {
 
             // Map of phase changes
             std::map<uint64_t, int64_t> phase_changes;
-            phase_changes[0] = -1; // Start in transition phase
+            phase_changes[0] = 2; // Start in transition phase
 
             uint64_t nintervals = xs.size() / interval_len;
             std::vector<bitvec> sigs(nintervals);
