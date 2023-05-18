@@ -1,6 +1,10 @@
+BOOST=/nethome/plavin3/local/boost_1_66_0
 all: main
 
-main:
-	g++ FtPjRG.cpp -o main
+main: ftpjrg.cpp ftpjrg.hpp
+	g++ -std=c++17 -Wall -Wno-parentheses -I${BOOST} ftpjrg.cpp -o main
 
-.PHONY: all
+clean:
+	rm -f main
+
+.PHONY: all clean
