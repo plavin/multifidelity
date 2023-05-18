@@ -100,9 +100,9 @@ class Window {
 private:
     std::vector<double> data;
     uint64_t start;
-    uint64_t size;
 
 public:
+    uint64_t size;
     Window(std::vector<T> data, uint64_t start, uint64_t size) : data(data), start(start), size(size) {
     }
 
@@ -144,11 +144,12 @@ public:
 
 class FtPjRG {
     private:
-        int window_start  = 1000;
+        uint64_t window_start  = 1000;
         int summarize     = 1000;
         int ms_init       = 10;
         bool debug        = false;
         int disp_interval = 100000;
+        float g_m         = 1.1;
 
         // F-test parameters
         float f_conf = 0.05;
@@ -180,9 +181,10 @@ class FtPjRG {
 
             WinRange<double> win0 = std::nullopt;
             WinRange<double> win1 = std::nullopt;
-            int ms = ms_init;
+            uint64_t ms = ms_init;
             int _phase = 1;
             bool equal_variance = false;
+            bool equal_mean = false;
 
             while (true) {
                 switch (_phase) {
@@ -201,9 +203,24 @@ class FtPjRG {
                             break;
                         } else {
                             win.shift_and_grow(f_shift, f_grow);
+                            if (win.size < ms*window_start) {
+                                break;
+                            } else {
+                                win.shift_and_reset(f_shift, window_start);
+                                ms *= g_m;
+                            }
                             break;
                         }
                     case 2:
+
+                        equal_mean = t_test<double>(win0, win1, t_conf);
+                        if (equal_mean) {
+                            _phase = 3;
+                            break;
+                        } else {
+                            win.shift_and_grow(t_shift, t_grow);
+                           _phase = 1;
+                        }
 
                         break;
                     case 3:
