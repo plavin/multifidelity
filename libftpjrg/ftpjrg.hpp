@@ -6,8 +6,11 @@
 
 #include <boost/math/distributions/fisher_f.hpp>
 #include <boost/math/distributions/students_t.hpp>
+#include <boost/math/statistics/linear_regression.hpp>
+#include <boost/iterator/counting_iterator.hpp>
 using boost::math::fisher_f;
 using boost::math::students_t;
+using boost::math::statistics::simple_ordinary_least_squares;
 
 template <typename T>
 using WinRange = std::optional<std::pair<typename std::vector<T>::iterator, typename std::vector<T>::iterator>>;
@@ -99,9 +102,9 @@ class Window {
 
 private:
     std::vector<double> data;
-    uint64_t start;
 
 public:
+    uint64_t start;
     uint64_t size;
     Window(std::vector<T> data, uint64_t start, uint64_t size) : data(data), start(start), size(size) {
     }
@@ -170,7 +173,7 @@ class FtPjRG {
 
     public:
 
-        std::optional<uint64_t> run(std::vector<uint64_t> data) {
+        std::optional<std::pair<uint64_t, uint64_t>> run(std::vector<uint64_t> data) {
             uint64_t new_len = data.size() / summarize;
             std::vector<double> data_summ(new_len);
             for (uint64_t i = 0; i < new_len; i++) {
@@ -181,14 +184,24 @@ class FtPjRG {
 
             WinRange<double> win0 = std::nullopt;
             WinRange<double> win1 = std::nullopt;
+            WinRange<double> win_combo = std::nullopt;
             uint64_t ms = ms_init;
             int _phase = 1;
             bool equal_variance = false;
             bool equal_mean = false;
+            std::vector<double> slope_history;
+            std::vector<double> xs, ys;
+            uint64_t combo_len;
+            double intercept, coeff;
+            std::pair<double, double> ols_ret;
+            WinPoint<double> pt_ret;
+            uint64_t x_star;
+            double y_hat, y_true;
+            uint32_t pos, neg;
 
             while (true) {
                 switch (_phase) {
-                    case 1:
+                    case 1: //F-test
                         win0 = win.get(0);
                         win1 = win.get(1);
 
@@ -200,31 +213,81 @@ class FtPjRG {
 
                         if (equal_variance) {
                             _phase = 2;
-                            break;
                         } else {
                             win.shift_and_grow(f_shift, f_grow);
                             if (win.size < ms*window_start) {
-                                break;
+
                             } else {
                                 win.shift_and_reset(f_shift, window_start);
                                 ms *= g_m;
                             }
-                            break;
                         }
-                    case 2:
+                        break;
+                    case 2: // T-test
 
                         equal_mean = t_test<double>(win0, win1, t_conf);
                         if (equal_mean) {
                             _phase = 3;
-                            break;
                         } else {
                             win.shift_and_grow(t_shift, t_grow);
                            _phase = 1;
                         }
+                       break;
+                    case 3: // Projection Test
+                        slope_history.clear();
 
-                        break;
-                    case 3:
-                        break;
+                        for (int j = 0; j < p_j; j++){
+                            win_combo = win.get_range(0+j, 1+j);
+                            if (!win_combo) {
+                                std::cout << "FtPjRG: Never converged!\n";
+                                return std::nullopt;
+                            }
+
+                            combo_len = std::distance(std::get<0>(*win_combo), std::get<1>(*win_combo));
+                            xs = std::vector<double>(boost::counting_iterator<double>(0), boost::counting_iterator<double>(combo_len));
+                            ys = std::vector<double>(std::get<0>(*win_combo), std::get<1>(*win_combo));
+
+                            ols_ret = simple_ordinary_least_squares(xs, ys);
+                            intercept = std::get<0>(ols_ret);
+                            coeff = std::get<1>(ols_ret);
+
+                            pt_ret = win.get_point(proj_dist);
+                            if (!pt_ret) {
+                                std::cout << "FtPjRG: Never converged!\n";
+                                return std::nullopt;
+                            }
+                            x_star = std::get<0>(*pt_ret);
+                            y_true = std::get<1>(*pt_ret);
+
+                            y_hat = intercept + coeff * x_star;
+
+                            if (abs(y_hat - y_true) > proj_delta) {
+                                win.shift_and_grow(p_shift, p_grow);
+                                _phase = 1;
+                                break;
+                            }
+
+                            slope_history.push_back(coeff);
+
+                        }
+                        pos = 0;
+                        neg = 0;
+                        if (p_j > 2) {
+                            for (auto x : slope_history) {
+                                pos += x > 0;
+                                neg += x < 0;
+                            }
+
+                            if (pos && neg) {
+                                return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start,win.size*2)};
+                            } else {
+                                _phase = 1;
+                                break;
+                            }
+                        }
+
+                        return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start,win.size*2)};
+                        break; //unreachable
                     default:
                         std::cout << "Error: should be unreachable\n";
                         exit(1);
@@ -235,7 +298,7 @@ class FtPjRG {
             }
 
             //return std::nullopt;
-            return std::optional<uint64_t>{10};
+            return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(10,10)};
 
         }
 

@@ -1,4 +1,4 @@
-BOOST=/nethome/plavin3/local/boost_1_66_0
+BOOST=/nethome/plavin3/local/boost_1_82_0
 all: main
 
 main: ftpjrg.cpp ftpjrg.hpp

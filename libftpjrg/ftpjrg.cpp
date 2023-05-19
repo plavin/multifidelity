@@ -10,7 +10,8 @@ int main() {
         *ip = 20;
     }
     if (auto stable = ft.run(xs) ) {
-        std::cout << "Converged at " << *stable << std::endl;
+        //std::cout << "Converged at " << *stable << std::endl;
+        std::cout <<" Converged.\n";
     } else {
         std::cout << "main: Never converged!\n";
     }
