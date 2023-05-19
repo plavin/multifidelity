@@ -64,8 +64,19 @@ bool f_test(
     double ucv2 = quantile(complement(dist, alpha / 2));
     double lcv2 = quantile(dist, alpha / 2);
 
+
+
+    std::cout << "F-test\n";
+    std::cout << "  sd1: " << sd1 << std::endl;
+    std::cout << "  sd2: " << sd2 << std::endl;
+    std::cout << "  N1: " << N1 << std::endl;
+    std::cout << "  N2: " << N2 << std::endl;
+    std::cout << "  F: " << F << std::endl;
+    std::cout << "  ucv2: " << ucv2 << std::endl;
+    std::cout << "  lcv2: " << lcv2 << std::endl;
+
     // If true, don't reject, meaning variances are equal
-    return (ucv2 < F) || (lcv2 > F);
+    return ! ((ucv2 < F) || (lcv2 > F));
 }
 
 // Whether the means are equal
@@ -150,7 +161,7 @@ class FtPjRG {
         uint64_t window_start  = 1000;
         int summarize     = 1000;
         int ms_init       = 10;
-        bool debug        = false;
+        bool debug        = true;
         int disp_interval = 100000;
         float g_m         = 1.1;
 
@@ -202,18 +213,25 @@ class FtPjRG {
             while (true) {
                 switch (_phase) {
                     case 1: //F-test
+
+                        if (debug) std::cout << "Entering phase 1\n";
+
                         win0 = win.get(0);
                         win1 = win.get(1);
 
                         if (!win1) {
-                            std::cout << "FtPjRG: Never converged!\n";
+                            std::cout << "Phase 1: Couldn't get window!\n";
                             return std::nullopt;
                         }
+
+                        if (debug) std::cout << "Phase 1: Testing variance\n";
                         equal_variance = f_test<double>(win0, win1, f_conf);
 
                         if (equal_variance) {
+                            if (debug) std::cout << "Phase 1: Variance equal\n";
                             _phase = 2;
                         } else {
+                            if (debug) std::cout << "Phase 1: Variance not equal\n";
                             win.shift_and_grow(f_shift, f_grow);
                             if (win.size < ms*window_start) {
 
@@ -223,7 +241,9 @@ class FtPjRG {
                             }
                         }
                         break;
+
                     case 2: // T-test
+                        if (debug) std::cout << "Entering phase 2\n";
 
                         equal_mean = t_test<double>(win0, win1, t_conf);
                         if (equal_mean) {
@@ -233,7 +253,9 @@ class FtPjRG {
                            _phase = 1;
                         }
                        break;
+
                     case 3: // Projection Test
+                        if (debug) std::cout << "Entering phase 3\n";
                         slope_history.clear();
 
                         for (int j = 0; j < p_j; j++){
@@ -247,6 +269,7 @@ class FtPjRG {
                             xs = std::vector<double>(boost::counting_iterator<double>(0), boost::counting_iterator<double>(combo_len));
                             ys = std::vector<double>(std::get<0>(*win_combo), std::get<1>(*win_combo));
 
+                            //ref: https://www.boost.org/doc/libs/master/libs/math/doc/html/math_toolkit/linear_regression.html
                             ols_ret = simple_ordinary_least_squares(xs, ys);
                             intercept = std::get<0>(ols_ret);
                             coeff = std::get<1>(ols_ret);
@@ -293,8 +316,6 @@ class FtPjRG {
                         exit(1);
 
                 }
-                std::cout << "Exiting early...\n";
-                break;
             }
 
             //return std::nullopt;
