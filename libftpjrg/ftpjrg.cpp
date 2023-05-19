@@ -1,47 +1,22 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include "ftpjrg.hpp"
 
-void test1() {
+std::pair<uint64_t, uint64_t> run(std::vector<uint64_t> data) {
     FtPjRG ft;
-
-
-    std::vector<uint64_t> xs(4000000);
-    for (auto &i: xs) {
-        i = 10;
-    }
-    for (auto ip = xs.begin()+xs.size()/2; ip!=xs.end(); ip++) {
-        *ip = 20;
-    }
-    if (auto stable = ft.run(xs) ) {
-        //std::cout << "Converged at " << *stable << std::endl;
-        std::cout <<" Converged.\n";
+    auto ret = ft.run(data);
+    if (!ret) {
+        return std::make_pair(0,0);
     } else {
-        std::cout << "main: Never converged!\n";
+        return *ret;
     }
-
 }
 
-void test2()
-{
-    FtPjRG ft;
-    boost::random::normal_distribution dist;
-    boost::random::mt19937 rng;
+namespace py = pybind11;
 
-    std::vector<uint64_t> data(4000000);
-    for (auto &x : data) {
-        x = rng() % 100;
-    }
-
-    for (auto ip = data.begin()+1000000; ip!=data.end(); ip++) {
-        *ip = 100 + rng() % 200;
-    }
-
-    std::cout << "Calling ft.run\n";
-    ft.run(data);
-
-}
-
-int main() {
-    test2();
+PYBIND11_MODULE(FastFtpjrg, m) {
+    m.doc() = "A module implementing the FtPjRG method";
+    m.def("run", &run, "Run the FtPjRG method", py::arg("data"));
 }
