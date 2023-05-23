@@ -4,6 +4,7 @@ set(CXX_STANDARD 17)
 project(Ftpjrg LANGUAGES CXX)
 include_directories(/nethome/plavin3/local/boost_1_82_0)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3") 
+add_compile_definitions(PYBIND)
 
 add_subdirectory(pybind11)
 

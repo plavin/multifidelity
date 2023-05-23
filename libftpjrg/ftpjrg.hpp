@@ -62,8 +62,11 @@ bool f_test(
     fisher_f dist(N1 - 1, N2 - 1);
 
     // Two-sided test
+    // Changed from the Boost example to match the Python
+    /*
     double ucv2 = quantile(complement(dist, alpha / 2));
     double lcv2 = quantile(dist, alpha / 2);
+    */
 
 
     // If true, don't reject, meaning variances are equal
@@ -240,7 +243,7 @@ class FtPjRG {
             uint64_t ms = ms_init;
             int _phase = 1;
             bool equal_variance = false;
-            bool levene_res = false;
+            //bool levene_res = false;
             bool equal_mean = false;
             std::vector<double> slope_history;
             std::vector<double> diff_history;
@@ -276,7 +279,7 @@ class FtPjRG {
 
                         if (debug) std::cout << "  f-test: [" << win.start << ", " << win.size << "]\n";
                         equal_variance = f_test<double>(win0, win1, f_conf);
-                        levene_res = levenes_test<double>(win0, win1, f_conf);
+                        //levene_res = levenes_test<double>(win0, win1, f_conf);
 
                         if (equal_variance) {
                             if (debug) std::cout << "Phase 1 - Go to Phase 2\n";
