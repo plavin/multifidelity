@@ -56,6 +56,7 @@ bool f_test(
     double N1 = std::distance(std::get<0>(*win0), std::get<1>(*win0));
     double N2 = std::distance(std::get<0>(*win1), std::get<1>(*win1));
 
+
     double F = (sd1 / sd2);
     F *= F;
     fisher_f dist(N1 - 1, N2 - 1);
@@ -66,6 +67,7 @@ bool f_test(
 
 
 
+    /*
     std::cout << "F-test\n";
     std::cout << "  sd1: " << sd1 << std::endl;
     std::cout << "  sd2: " << sd2 << std::endl;
@@ -74,9 +76,14 @@ bool f_test(
     std::cout << "  F: " << F << std::endl;
     std::cout << "  ucv2: " << ucv2 << std::endl;
     std::cout << "  lcv2: " << lcv2 << std::endl;
+    */
 
     // If true, don't reject, meaning variances are equal
-    return ! ((ucv2 < F) || (lcv2 > F));
+
+    double p = 1 - cdf(dist, F);
+    printf("  f-test: F-val = %lf, p-val = %lf\n", F, p);
+    return p > alpha;
+    //return ! ((ucv2 < F) || (lcv2 > F));
 }
 
 // Whether the means are equal
@@ -104,7 +111,10 @@ bool t_test(
     double t_stat = (sm1 - sm2) / (sp * sqrt(1.0 / N1 + 1.0 / N2));
 
     students_t dist(v);
-    return cdf(complement(dist, fabs(t_stat))) < alpha / 2;
+
+    double p = cdf(complement(dist, fabs(t_stat)));
+    printf("  f-test: t-val = %lf, p-val = %lf, alpha/2 = %lf\n", t_stat, p, alpha/2);
+    return p > (alpha / 2);
 
 }
 
@@ -158,8 +168,8 @@ public:
 
 class FtPjRG {
     private:
-        uint64_t window_start  = 1000;
-        int summarize     = 1000;
+        uint64_t window_start  = 500;
+        int summarize     = 500;
         int ms_init       = 10;
         bool debug        = true;
         int disp_interval = 100000;
@@ -177,19 +187,28 @@ class FtPjRG {
 
         // Projection test parameters
         int proj_dist    = 5;
-        float proj_delta = 1.0;
+        float proj_delta = 2.0;
         int p_shift      = 1;
         int p_grow       = 1;
-        int p_j          = 1;
+        int p_j          = 4;
 
     public:
 
         std::optional<std::pair<uint64_t, uint64_t>> run(std::vector<uint64_t> data) {
+            if (data.size() > 10) {
+                return std::nullopt;
+            }
             uint64_t new_len = data.size() / summarize;
             std::vector<double> data_summ(new_len);
             for (uint64_t i = 0; i < new_len; i++) {
-                data_summ[i] = std::accumulate(data.begin()+(i  )*summarize, data.begin()+(i+1)*summarize, 0, std::plus<uint64_t>()) / summarize;
+                data_summ[i] = ((double) std::accumulate(data.begin()+(i  )*summarize, data.begin()+(i+1)*summarize, 0.0, std::plus<double>())) / summarize;
             }
+
+            printf("First 10 elements:");
+            for (int i = 0; i < 10; i++) {
+                printf(" %lf", data_summ[i]);
+            }
+            printf("\n");
 
             Window<double> win(data_summ, 0, window_start);
 
@@ -201,6 +220,7 @@ class FtPjRG {
             bool equal_variance = false;
             bool equal_mean = false;
             std::vector<double> slope_history;
+            std::vector<double> diff_history;
             std::vector<double> xs, ys;
             uint64_t combo_len;
             double intercept, coeff;
@@ -209,12 +229,19 @@ class FtPjRG {
             uint64_t x_star;
             double y_hat, y_true;
             uint32_t pos, neg;
+            int iteration = 0;
+            int good_diffs = 0;
 
             while (true) {
+                iteration++;
+                if (iteration > 25) {
+                    printf("ITERATION NUMBER TOO HIGH!\n");
+                    return std::nullopt;
+                }
                 switch (_phase) {
                     case 1: //F-test
 
-                        if (debug) std::cout << "Entering phase 1\n";
+                        if (debug) printf("Phase %d - Iteration %d\n", _phase, iteration);
 
                         win0 = win.get(0);
                         win1 = win.get(1);
@@ -224,18 +251,20 @@ class FtPjRG {
                             return std::nullopt;
                         }
 
-                        if (debug) std::cout << "Phase 1: Testing variance\n";
+                        if (debug) std::cout << "  f-test: [" << win.start << ", " << win.size << "]\n";
                         equal_variance = f_test<double>(win0, win1, f_conf);
 
                         if (equal_variance) {
-                            if (debug) std::cout << "Phase 1: Variance equal\n";
+                            if (debug) std::cout << "Phase 1 - Go to Phase 2\n";
                             _phase = 2;
                         } else {
-                            if (debug) std::cout << "Phase 1: Variance not equal\n";
+                            if (debug) std::cout << "Phase 1 - Grow window\n";
                             win.shift_and_grow(f_shift, f_grow);
                             if (win.size < ms*window_start) {
-
+                                if (debug) std::cout << "Phase 1 - Window not too big\n";
+                                break;
                             } else {
+                                    if (debug) std::cout << "Phase 1 - Reset window\n";
                                 win.shift_and_reset(f_shift, window_start);
                                 ms *= g_m;
                             }
@@ -243,20 +272,23 @@ class FtPjRG {
                         break;
 
                     case 2: // T-test
-                        if (debug) std::cout << "Entering phase 2\n";
-
+                        if (debug) printf("Phase %d - Iteration %d\n", _phase, iteration);
+                        if (debug) std::cout << "  t-test: [" << win.start << ", " << win.size << "]\n";
                         equal_mean = t_test<double>(win0, win1, t_conf);
                         if (equal_mean) {
+                            if (debug) std::cout << "Phase 2 - t-test passed. Go to Phase 3\n";
                             _phase = 3;
                         } else {
+                            if (debug) std::cout << "Phase 2 - t-test failed. Go to Phase 1.\n";
                             win.shift_and_grow(t_shift, t_grow);
                            _phase = 1;
                         }
                        break;
 
                     case 3: // Projection Test
-                        if (debug) std::cout << "Entering phase 3\n";
+                        if (debug) printf("Phase %d - Iteration %d\n", _phase, iteration);
                         slope_history.clear();
+                        diff_history.clear();
 
                         for (int j = 0; j < p_j; j++){
                             win_combo = win.get_range(0+j, 1+j);
@@ -284,32 +316,49 @@ class FtPjRG {
 
                             y_hat = intercept + coeff * x_star;
 
-                            if (abs(y_hat - y_true) > proj_delta) {
-                                win.shift_and_grow(p_shift, p_grow);
-                                _phase = 1;
-                                break;
-                            }
-
+                            if (debug) std::cout << "Phase 3 - Append to slope/diff history.\n";
                             slope_history.push_back(coeff);
+                            diff_history.push_back(abs(y_hat - y_true));
 
                         }
+
+                        if (debug) std::cout << "Phase 3 - Diff test\n";
+                        good_diffs = p_j;
+                        for (auto x : diff_history) {
+                            if (x < proj_delta) {
+                                good_diffs--;
+                            }
+                        }
+                        if (good_diffs) {
+                            if (debug) std::cout << "Phase 3 - Diff test failed. Go to Phase 1.\n";
+                            win.shift_and_grow(p_shift, p_grow);
+                            _phase = 1;
+                            break;
+                        }
+
                         pos = 0;
                         neg = 0;
                         if (p_j > 2) {
+                            
+
+                            if (debug) std::cout << "Phase 3 - Pos/neg test\n";
                             for (auto x : slope_history) {
                                 pos += x > 0;
                                 neg += x < 0;
                             }
 
                             if (pos && neg) {
-                                return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start,win.size*2)};
+                                if (debug) std::cout << "Phase 3 - Pos/neg test passed. DONE.\n";
+                                return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start*summarize,win.size*2*summarize)};
                             } else {
+                                if (debug) std::cout << "Phase 3 - Pos/neg test failed. Go to Phase 1.\n";
                                 _phase = 1;
                                 break;
                             }
                         }
 
-                        return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start,win.size*2)};
+                        if (debug) std::cout << "Phase 3 - Pos/neg test not used. DONE.\n";
+                        return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start*summarize,win.size*2*summarize)};
                         break; //unreachable
                     default:
                         std::cout << "Error: should be unreachable\n";
