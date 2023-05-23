@@ -66,24 +66,49 @@ bool f_test(
     double lcv2 = quantile(dist, alpha / 2);
 
 
-
-    /*
-    std::cout << "F-test\n";
-    std::cout << "  sd1: " << sd1 << std::endl;
-    std::cout << "  sd2: " << sd2 << std::endl;
-    std::cout << "  N1: " << N1 << std::endl;
-    std::cout << "  N2: " << N2 << std::endl;
-    std::cout << "  F: " << F << std::endl;
-    std::cout << "  ucv2: " << ucv2 << std::endl;
-    std::cout << "  lcv2: " << lcv2 << std::endl;
-    */
-
     // If true, don't reject, meaning variances are equal
 
     double p = 1 - cdf(dist, F);
     printf("  f-test: F-val = %lf, p-val = %lf\n", F, p);
     return p > alpha;
     //return ! ((ucv2 < F) || (lcv2 > F));
+}
+
+template <typename T>
+bool levenes_test(WinRange<T> win0, WinRange<T> win1, double alpha)
+{
+    // Both are the same size
+    uint64_t N = std::distance(std::get<0>(*win0), std::get<1>(*win0));
+
+    // There are two groups, win0 and win1
+    uint64_t k = 2;
+
+    // Calculate means
+    double Z0 = calc_mean<T>(win0);
+    double Z1 = calc_mean<T>(win1);
+    double Zdd = (Z0+Z1)/2;
+
+    double numer = pow(N,2) * (pow(Z0-Zdd, 2) + pow(Z1-Zdd,2));
+
+    double z0_denom = 0;
+    for (auto it = std::get<0>(*win0); it!=std::get<1>(*win0); it++){
+        z0_denom += pow(*it-Z0,2);
+    }
+
+    double z1_denom = 0;
+    for (auto it = std::get<0>(*win1); it!=std::get<1>(*win1); it++){
+        z1_denom += pow(*it-Z1,2);
+    }
+    double denom = z0_denom + z1_denom;
+
+    double W = (N-k) * numer / denom;
+    fisher_f dist(k-1,2*N-2);
+    double ucv = quantile(complement(dist, alpha));
+
+    printf("  l-test: W-val = %lf, ucv = %lf, eq? %d\n", W, ucv, W < ucv);
+
+    // Return whether variances are equal
+    return W < ucv;
 }
 
 // Whether the means are equal
@@ -113,7 +138,7 @@ bool t_test(
     students_t dist(v);
 
     double p = cdf(complement(dist, fabs(t_stat)));
-    printf("  f-test: t-val = %lf, p-val = %lf, alpha/2 = %lf\n", t_stat, p, alpha/2);
+    printf("  t-test: t-val = %lf, p-val = %lf, alpha/2 = %lf\n", t_stat, p, alpha/2);
     return p > (alpha / 2);
 
 }
@@ -215,6 +240,7 @@ class FtPjRG {
             uint64_t ms = ms_init;
             int _phase = 1;
             bool equal_variance = false;
+            bool levene_res = false;
             bool equal_mean = false;
             std::vector<double> slope_history;
             std::vector<double> diff_history;
@@ -250,6 +276,7 @@ class FtPjRG {
 
                         if (debug) std::cout << "  f-test: [" << win.start << ", " << win.size << "]\n";
                         equal_variance = f_test<double>(win0, win1, f_conf);
+                        levene_res = levenes_test<double>(win0, win1, f_conf);
 
                         if (equal_variance) {
                             if (debug) std::cout << "Phase 1 - Go to Phase 2\n";

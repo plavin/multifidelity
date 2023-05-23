@@ -14,7 +14,7 @@ TRACES = TraceList(DATA_DIR)
 print('Files: ', TRACES)
 
 for t in TRACES:
-    if t.name != '2mm':
+    if t.name != 'correlation':
         continue
     print(f'Loading {t.name}')
     data = np.array(t.load()['latency_nano'], dtype=np.uint64)

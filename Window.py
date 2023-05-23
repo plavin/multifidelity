@@ -22,6 +22,8 @@ class Window:
             return None
 
         begin = self.start + self.size*idx_begin
+        # YES this includes the window at idx_end for some reason.
+        # Returns [idx_begin, idx_end]
         end   = self.start + self.size + (self.size)*idx_end
 
         if debug:
