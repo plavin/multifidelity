@@ -195,9 +195,6 @@ class FtPjRG {
     public:
 
         std::optional<std::pair<uint64_t, uint64_t>> run(std::vector<uint64_t> data) {
-            if (data.size() > 10) {
-                return std::nullopt;
-            }
             uint64_t new_len = data.size() / summarize;
             std::vector<double> data_summ(new_len);
             for (uint64_t i = 0; i < new_len; i++) {
