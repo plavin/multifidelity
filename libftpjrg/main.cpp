@@ -13,7 +13,8 @@ void test1() {
     for (auto ip = xs.begin()+xs.size()/2; ip!=xs.end(); ip++) {
         *ip = 20;
     }
-    if (auto stable = ft.run(xs) ) {
+    auto ret = ft.run(xs);
+    if (std::get<2>(ret)) {
         //std::cout << "Converged at " << *stable << std::endl;
         std::cout <<" Converged.\n";
     } else {

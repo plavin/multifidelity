@@ -223,11 +223,19 @@ class FtPjRG {
 
     public:
 
+        std::tuple<uint64_t, uint64_t, bool> run(std::vector<uint64_t> data) {
+            std::deque<uint64_t> vec(data.begin(), data.end());
+            return run(vec);
+        }
+        /*
         std::optional<std::pair<uint64_t, uint64_t>> run(std::vector<uint64_t> data) {
             std::deque<uint64_t> vec(data.begin(), data.end());
             return run(vec);
         }
-        std::optional<std::pair<uint64_t, uint64_t>> run(std::deque<uint64_t> data) {
+        */
+
+        //std::optional<std::pair<uint64_t, uint64_t>> run(std::deque<uint64_t> data) {
+        std::tuple<uint64_t, uint64_t, bool> run(std::deque<uint64_t> data) {
             uint64_t new_len = data.size() / summarize;
             std::vector<double> data_summ(new_len);
             for (uint64_t i = 0; i < new_len; i++) {
@@ -267,7 +275,7 @@ class FtPjRG {
                 iteration++;
                 if (iteration > 25) {
                     printf("ITERATION NUMBER TOO HIGH!\n");
-                    return std::nullopt;
+                    return std::make_tuple(win.start*summarize,win.size*summarize,false);
                 }
                 switch (_phase) {
                     case 1: //F-test
@@ -279,7 +287,7 @@ class FtPjRG {
 
                         if (!win1) {
                             std::cout << "Phase 1: Couldn't get window!\n";
-                            return std::nullopt;
+                            return std::make_tuple(win.start*summarize,win.size*summarize,false);
                         }
 
                         if (debug) std::cout << "  f-test: [" << win.start << ", " << win.size << "]\n";
@@ -326,7 +334,7 @@ class FtPjRG {
                             win_combo = win.get_range(0+j, 1+j);
                             if (!win_combo) {
                                 std::cout << "FtPjRG: Never converged!\n";
-                                return std::nullopt;
+                                return std::make_tuple(win.start*summarize,win.size*summarize,false);
                             }
 
                             combo_len = std::distance(std::get<0>(*win_combo), std::get<1>(*win_combo));
@@ -341,7 +349,7 @@ class FtPjRG {
                             pt_ret = win.get_point(proj_dist);
                             if (!pt_ret) {
                                 std::cout << "FtPjRG: Never converged!\n";
-                                return std::nullopt;
+                                return std::make_tuple(win.start*summarize,win.size*summarize,false);
                             }
                             x_star = std::get<0>(*pt_ret);
                             y_true = std::get<1>(*pt_ret);
@@ -371,7 +379,6 @@ class FtPjRG {
                         pos = 0;
                         neg = 0;
                         if (p_j > 2) {
-                            
 
                             if (debug) std::cout << "Phase 3 - Pos/neg test\n";
                             for (auto x : slope_history) {
@@ -381,7 +388,7 @@ class FtPjRG {
 
                             if (pos && neg) {
                                 if (debug) std::cout << "Phase 3 - Pos/neg test passed. DONE.\n";
-                                return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start*summarize,win.size*2*summarize)};
+                                return std::make_tuple(win.start*summarize,win.size*summarize,true);
                             } else {
                                 if (debug) std::cout << "Phase 3 - Pos/neg test failed. Go to Phase 1.\n";
                                 _phase = 1;
@@ -390,7 +397,7 @@ class FtPjRG {
                         }
 
                         if (debug) std::cout << "Phase 3 - Pos/neg test not used. DONE.\n";
-                        return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(win.start*summarize,win.size*2*summarize)};
+                        return std::make_tuple(win.start*summarize,win.size*summarize,true);
                         break; //unreachable
                     default:
                         std::cout << "Error: should be unreachable\n";
@@ -398,9 +405,8 @@ class FtPjRG {
 
                 }
             }
-
-            //return std::nullopt;
-            return std::optional<std::pair<uint64_t,uint64_t>>{std::make_pair(10,10)};
+            std::cout << "Error: should be unreachable\n";
+            return std::make_tuple(0,0,false);
 
         }
 

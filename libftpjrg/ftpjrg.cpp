@@ -6,14 +6,9 @@
 #include <boost/random/mersenne_twister.hpp>
 #include "ftpjrg.hpp"
 
-std::pair<uint64_t, uint64_t> run(std::vector<uint64_t> data) {
+std::tuple<uint64_t,uint64_t,bool> run(std::vector<uint64_t> data) {
     FtPjRG ft;
-    auto ret = ft.run(data);
-    if (!ret) {
-        return std::make_pair(0,0);
-    } else {
-        return *ret;
-    }
+    return ft.run(data);
 }
 
 #ifdef PYBIND
