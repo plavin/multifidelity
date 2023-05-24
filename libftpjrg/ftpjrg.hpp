@@ -197,7 +197,7 @@ public:
 
 class FtPjRG {
     private:
-        uint64_t window_start  = 500;
+        uint64_t window_start  = 10;
         int summarize     = 500;
         int ms_init       = 10;
         bool debug        = true;

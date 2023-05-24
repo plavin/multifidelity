@@ -162,6 +162,7 @@ if __name__ == '__main__':
       parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
       parser.add_argument('-t', '--trace', help='enable tracing', action="store_true")
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
+      parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
       args = parser.parse_args(sys.argv[1:])
 
       parrot_levels = []
@@ -227,11 +228,14 @@ if __name__ == '__main__':
             if args.rrfile is not None:
                    parrots[level].addParams({'rr_temp' : f'{args.rrfile} {benchName}'})
 
+            if args.multifidelity:
+                  parrots[level].addParams({'enable_multifidelity' : True})
+
       # Only enable phase detection when we have Parrots,
       # otherwise the phase message will break the memory controller
       if (len(parrots) > 0):
-            core.addParams({'manual_pd':True})
-            #core.addParams({'phase_detection':True})
+            #core.addParams({'manual_pd':True})
+            core.addParams({'phase_detection':True})
             #pass
 
       # By default, the Parrots will not foward the phase messages
