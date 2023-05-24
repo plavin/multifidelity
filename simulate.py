@@ -229,6 +229,8 @@ def run(argv):
         if sim_args.parrot_levels != '':
             sdl_args.append('-p')
             sdl_args.append(str(sim_args.parrot_levels))
+        if sim_args.multifidelity:
+            sdl_args.append('-M')
         if sim_args.trace:
             sdl_args.append('-t')
         if sim_args.rrfile:

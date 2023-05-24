@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
             if args.trace:
                   parrots[level].addParams({'enable_tracing' : True,
-                                            'trace_file' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}.out'})
+                                            'trace_prefix' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}'})
             if args.rrfile is not None:
                    parrots[level].addParams({'rr_temp' : f'{args.rrfile} {benchName}'})
 

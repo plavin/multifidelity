@@ -73,7 +73,7 @@ bool f_test(
     // If true, don't reject, meaning variances are equal
 
     double p = 1 - cdf(dist, F);
-    printf("  f-test: F-val = %lf, p-val = %lf\n", F, p);
+    //printf("  f-test: F-val = %lf, p-val = %lf\n", F, p);
     return p > alpha;
     //return ! ((ucv2 < F) || (lcv2 > F));
 }
@@ -109,7 +109,7 @@ bool levenes_test(WinRange<T> win0, WinRange<T> win1, double alpha)
     fisher_f dist(k-1,2*N-2);
     double ucv = quantile(complement(dist, alpha));
 
-    printf("  l-test: W-val = %lf, ucv = %lf, eq? %d\n", W, ucv, W < ucv);
+    //printf("  l-test: W-val = %lf, ucv = %lf, eq? %d\n", W, ucv, W < ucv);
 
     // Return whether variances are equal
     return W < ucv;
@@ -142,7 +142,7 @@ bool t_test(
     students_t dist(v);
 
     double p = cdf(complement(dist, fabs(t_stat)));
-    printf("  t-test: t-val = %lf, p-val = %lf, alpha/2 = %lf\n", t_stat, p, alpha/2);
+    //printf("  t-test: t-val = %lf, p-val = %lf, alpha/2 = %lf\n", t_stat, p, alpha/2);
     return p > (alpha / 2);
 
 }
@@ -200,7 +200,7 @@ class FtPjRG {
         uint64_t window_start  = 10;
         int summarize     = 500;
         int ms_init       = 10;
-        bool debug        = true;
+        bool debug        = false;
         int disp_interval = 100000;
         float g_m         = 1.1;
 
@@ -242,11 +242,13 @@ class FtPjRG {
                 data_summ[i] = ((double) std::accumulate(data.begin()+(i  )*summarize, data.begin()+(i+1)*summarize, 0.0, std::plus<double>())) / summarize;
             }
 
+            /*
             printf("First 10 elements:");
             for (int i = 0; i < 10; i++) {
                 printf(" %lf", data_summ[i]);
             }
             printf("\n");
+            */
 
             Window<double> win(data_summ, 0, window_start);
 
@@ -273,10 +275,12 @@ class FtPjRG {
 
             while (true) {
                 iteration++;
+                /*
                 if (iteration > 25) {
                     printf("ITERATION NUMBER TOO HIGH!\n");
                     return std::make_tuple(win.start*summarize,win.size*summarize,false);
                 }
+                */
                 switch (_phase) {
                     case 1: //F-test
 
