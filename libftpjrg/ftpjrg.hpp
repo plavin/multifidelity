@@ -3,6 +3,7 @@
 #include <functional>
 #include <numeric>
 #include <optional>
+#include <deque>
 
 #include <boost/math/distributions/fisher_f.hpp>
 #include <boost/math/distributions/students_t.hpp>
@@ -223,6 +224,10 @@ class FtPjRG {
     public:
 
         std::optional<std::pair<uint64_t, uint64_t>> run(std::vector<uint64_t> data) {
+            std::deque<uint64_t> vec(data.begin(), data.end());
+            return run(vec);
+        }
+        std::optional<std::pair<uint64_t, uint64_t>> run(std::deque<uint64_t> data) {
             uint64_t new_len = data.size() / summarize;
             std::vector<double> data_summ(new_len);
             for (uint64_t i = 0; i < new_len; i++) {
