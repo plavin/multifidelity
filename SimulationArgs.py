@@ -14,6 +14,7 @@ class SimulationArgs:
     parrot_levels: str    = ''
     nruns: int            = 1
     trace: bool           = False
+    backup: bool          = False
     multifidelity: bool   = False
     stop_at: str          = None
     rrfile: pathlib.Path  = None
@@ -34,6 +35,7 @@ class SimulationArgs:
         s += f' parrot_levels: {self.parrot_levels}\n'
         s += f' nruns:         {self.nruns}\n'
         s += f' trace:         {self.trace}\n'
+        s += f' backup:        {self.backup}\n'
         s += f' multifidelity: {self.multifidelity}\n'
         s += f' stop_at:       {self.stop_at}\n'
         s += f' sdl:           {self.sdl}\n'
@@ -51,6 +53,7 @@ def parse(argv):
     parser.add_argument('-p', '--parrot-levels', help='comma separated list of cache levels to enable the Parrot on', type=str, required=False, default='')
     parser.add_argument('-n', '--nruns', help='number of times to repeat each benchmark', type=int, required=False, default=1)
     parser.add_argument('-t', '--trace', help='enable tracing', required=False, action="store_true")
+    parser.add_argument('-B', '--backup', help='enable tracing', required=False, action="store_true")
     parser.add_argument('-M', '--multifidelity', help='enable multifidelity', required=False, action="store_true")
     parser.add_argument('-o', '--outfile', help='file to print to', type=str, required=False, default=None)
     parser.add_argument('-r', '--rrfile', help='file to read representative regions from', type=str, required=False, default=None)
@@ -97,6 +100,7 @@ def parse(argv):
                           parrot_levels = args.parrot_levels,
                           nruns = args.nruns,
                           trace = args.trace,
+                          backup = args.backup,
                           multifidelity = args.multifidelity,
                           sdl = sdl_path,
                           outfile = outfile_path,
