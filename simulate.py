@@ -258,10 +258,6 @@ def run(sim_args):
         st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
     return (RunData(sim_args, stats_dict, prof_str, st))
 
-def RunDataUnpickle(path):
-    with open(path, 'rb') as file:
-        return pickle.load(file)
-
 if __name__ == "__main__":
     sim_args = SimulationArgs.parse(sys.argv)
     print(sim_args)

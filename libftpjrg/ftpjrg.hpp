@@ -290,7 +290,7 @@ class FtPjRG {
                         win1 = win.get(1);
 
                         if (!win1) {
-                            std::cout << "Phase 1: Couldn't get window!\n";
+                            if (debug) std::cout << "Phase 1: Couldn't get window!\n";
                             return std::make_tuple(win.start*summarize,win.size*summarize,false);
                         }
 
@@ -337,7 +337,7 @@ class FtPjRG {
                         for (int j = 0; j < p_j; j++){
                             win_combo = win.get_range(0+j, 1+j);
                             if (!win_combo) {
-                                std::cout << "FtPjRG: Never converged!\n";
+                                if (debug) std::cout << "FtPjRG: Never converged!\n";
                                 return std::make_tuple(win.start*summarize,win.size*summarize,false);
                             }
 
@@ -352,7 +352,7 @@ class FtPjRG {
 
                             pt_ret = win.get_point(proj_dist);
                             if (!pt_ret) {
-                                std::cout << "FtPjRG: Never converged!\n";
+                                if (debug) std::cout << "FtPjRG: Never converged!\n";
                                 return std::make_tuple(win.start*summarize,win.size*summarize,false);
                             }
                             x_star = std::get<0>(*pt_ret);
@@ -395,6 +395,7 @@ class FtPjRG {
                                 return std::make_tuple(win.start*summarize,win.size*summarize,true);
                             } else {
                                 if (debug) std::cout << "Phase 3 - Pos/neg test failed. Go to Phase 1.\n";
+                                win.shift_and_grow(p_shift, p_grow);
                                 _phase = 1;
                                 break;
                             }
