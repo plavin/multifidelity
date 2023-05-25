@@ -10,6 +10,10 @@ import numpy as np
 import statistics
 import numericalunits as nu
 import SimulationArgs
+from scipy.stats import sem
+from dataclasses import dataclass, field
+import pickle
+from RunData import RunData
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -84,22 +88,22 @@ class SimTime:
     def __init__(self, times):
         self.mean = statistics.mean(times)
         if len(times) > 1:
-            self.stdev = statistics.stdev(times)
+            self.sem = sem(times)
         else:
-            self.stdev = 0
+            self.sem = 0
     def __repr__(self):
-        return f'{self.mean/nu.ms:.2f} (+/-{self.stdev/nu.ms:.2f}) ms'
+        return f'{self.mean/nu.ms:.2f} (+/-{self.sem/nu.ms:.2f}) ms'
 
 class SummaryRate:
     def __init__(self, times, unit):
         self.mean = statistics.harmonic_mean(times)
         if len(times) > 1:
-            self.stdev = statistics.stdev(times)
+            self.sem = sem(times)
         else:
-            self.stdev = 0
+            self.sem = 0
         self.unit = unit
     def __repr__(self):
-        return f'{self.mean:.3f} (+/-{self.stdev:.3f}) {self.unit}'
+        return f'{self.mean:.3f} (+/-{self.sem:.3f}) {self.unit}'
 
 def parse_sim_time(stdout):
     lines = stdout.split('\n')
@@ -204,9 +208,7 @@ class SimStats():
 
         return s
 
-def run(argv):
-    sim_args = SimulationArgs.parse(argv)
-    print(sim_args)
+def run(sim_args):
 
     stop_at = '100ms'
     if sim_args.stop_at is not None:
@@ -254,11 +256,21 @@ def run(argv):
         else:
             parrot_list = []
         st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
-    return (st)
+    return (RunData(sim_args, stats_dict, prof_str, st))
+
+def RunDataUnpickle(path):
+    with open(path, 'rb') as file:
+        return pickle.load(file)
 
 if __name__ == "__main__":
-    st = run(sys.argv)
-    for key in st:
+    sim_args = SimulationArgs.parse(sys.argv)
+    print(sim_args)
+    ret = run(sim_args)
+    for key in ret.st:
         print(f'\n{key} ' + '-'*30)
-        print(st[key])
+        print(ret.st[key])
+    if ret.sim_args.outfile is not None:
+        with ret.sim_args.outfile.open('wb') as file:
+            print(f'Dumping run data to {ret.sim_args.outfile}')
+            pickle.dump(ret, file)
     print('Done')
