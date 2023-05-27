@@ -6,10 +6,17 @@ from functools import total_ordering
 
 @total_ordering
 class Trace:
-    def __init__(self, path):
+    def __init__(self, path, new_ext=False):
         self.path = path
-        self.name = path.stem.split('_')[2]
+        self.name = path.name.split('.')[0].split('_')[2]
         self.data = None
+        self.stable = None
+
+        if new_ext:
+            filename = self.path.name.replace('latency_trace', 'stable_region')
+            self.stable_path = path.parent.joinpath(pathlib.Path(filename)).resolve()
+            if self.stable_path.exists():
+                self.stable = pd.read_csv(self.stable_path, delim_whitespace=True)
 
     def _load(self):
         return pd.read_csv(self.path, delim_whitespace=True)
@@ -35,11 +42,13 @@ class Trace:
         return (self.name == obj.name)
 
 class TraceList:
-    def __init__(self, data_dir, max_files=None):
-        self.files = [p.absolute() for p in pathlib.Path(data_dir).iterdir()]
-        if max is not None:
-            self.files = self.files[:max_files]
-        self.traces = sorted([Trace(f) for f in self.files])
+    def __init__(self, data_dir, new_ext=False):
+        if new_ext:
+            self.files = [p.absolute() for p in pathlib.Path(data_dir).iterdir() if '.latency_trace' in p.suffixes]
+        else:
+            self.files = [p.absolute() for p in pathlib.Path(data_dir).iterdir()]
+
+        self.traces = sorted([Trace(f, new_ext) for f in self.files])
 
     def __getitem__(self, idx):
         return self.traces[idx]
@@ -58,6 +67,12 @@ class TraceList:
 
     def __iter__(self):
         return iter(self.traces)
+
+    def find(self, name):
+        for t in self.traces:
+            if t.name == name:
+                return t
+        return None
 
 if __name__ == "__main__":
     DATA_DIR = 'parrot-traces/medium-100ms-manualpd/'
