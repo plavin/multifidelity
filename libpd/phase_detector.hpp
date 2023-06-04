@@ -73,7 +73,7 @@ class PhaseDetector {
 
             // Map of phase changes
             std::map<uint64_t, int64_t> phase_changes;
-            phase_changes[0] = 2; // Start in transition phase
+            phase_changes[0] = -1; // Start in transition phase
 
             uint64_t nintervals = xs.size() / interval_len;
             std::vector<bitvec> sigs(nintervals);
