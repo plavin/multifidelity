@@ -181,7 +181,35 @@ int main(int argc, char** argv) {
         std::cout << "Error: " << argv[1] << " is not a directory.\n";
     }
 
-    std::cout << "# Reading trace.out files from [" << trace_path.string() << "]\n";
+    // Some testing defaults
+    /*
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000};
+    std::vector<double> param_threshold{0.5};
+    std::vector<int> param_stable_min{4};
+    std::vector<uint64_t> param_window_start{10};
+    std::vector<int> param_summarize{500};
+    std::vector<int> param_proj_dist{5};
+    std::vector<float> param_proj_delta{2.0};
+    std::vector<int> param_p_j{4};
+    */
+
+    // Phase detection parameters
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
+    std::vector<double> param_threshold{0.4, 0.5, 0.6};
+    std::vector<int> param_stable_min{3, 4, 5};
+
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{10, 15, 20};
+    std::vector<int> param_summarize{250, 500, 1000};
+    std::vector<int> param_proj_dist{5, 10};
+    std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+
+    std::cout << "# Testing " << param_phase_length.size() * param_threshold.size() * param_stable_min.size() *
+                               param_window_start.size() * param_summarize.size() * param_proj_dist.size() *
+                               param_proj_delta.size() * param_p_j.size()
+                            << " configurations \n";
 
     std::vector<fs::path> trace_file_paths;
     for(auto& entry : boost::make_iterator_range(fs::directory_iterator(trace_path), {})) {
@@ -190,33 +218,17 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::cout << "# Reading [" << trace_file_paths.size() << "] trace.out files from [" << trace_path.string() << "]\n";
+
     // Step 1: Read in traces
     std::vector<trace> traces;
     //TODO: change back
-    //for (int i = 0; i < trace_file_paths.size(); i++) {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < trace_file_paths.size(); i++) {
         std::cout << "# -> " << trace_file_paths[i].filename().string() << std::endl;
         traces.push_back(load(trace_file_paths[i]));
     }
 
     std::cout << "# Done loading files.\n";
-
-    // Phase detection parameters
-    /*
-    std::vector<int> param_phase_length{50'000, 100'000, 200'000, 500'000, 1'000'000};
-    std::vector<double> param_threshold{0.4, 0.5, 0.6};
-    std::vector<int> stable_min{3, 4, 5, 6};
-    */
-    std::vector<int> param_phase_length{10'000, 50'000, 100'000};
-    std::vector<double> param_threshold{0.5};
-    std::vector<int> param_stable_min{4};
-
-    // Stability detection parameters
-    std::vector<uint64_t> param_window_start{10};
-    std::vector<int> param_summarize{500};
-    std::vector<int> param_proj_dist{5};
-    std::vector<float> param_proj_delta{2.0};
-    std::vector<int> param_p_j{4,6};
 
     // Output header
     std::cout  << "pct "
