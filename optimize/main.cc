@@ -43,11 +43,13 @@ trace load(fs::path p, uint64_t max=0) {
         t.latency_nano.push_back(latency_nano);
         if (max) {
             if (read++ > max) {
+                file.close();
                 return t;
             }
         }
     }
 
+    file.close();
     return t;
 }
 
@@ -145,7 +147,7 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
     }
 
     if (time_swapped == 0) {
-        return score(0, 1);
+        return score(0, 0); //zero percent swapped, but zero error as well
     }
 
     double pct_swapped = ((double)time_swapped) / tr.ip.size();
@@ -153,7 +155,7 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
     return score(pct_swapped, rr_accuracy);
 }
 
-score eval_traces(const std::vector<trace> traces, PhaseDetector &pd, FtPjRG &sd) {
+score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
     std::vector<score> scores;
     for (auto &tr : traces) {
         scores.push_back(eval(tr, pd, sd));
@@ -193,6 +195,8 @@ int main(int argc, char** argv) {
     std::vector<int> param_p_j{4};
     */
 
+    // First run
+    /*
     // Phase detection parameters
     std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
     std::vector<double> param_threshold{0.4, 0.5, 0.6};
@@ -202,6 +206,21 @@ int main(int argc, char** argv) {
     // Stability detection parameters
     std::vector<uint64_t> param_window_start{10, 15, 20};
     std::vector<int> param_summarize{250, 500, 1000};
+    std::vector<int> param_proj_dist{5, 10};
+    std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+
+    // Second run
+    // Phase detection parameters
+    std::vector<int> param_phase_length{50'000};
+    std::vector<double> param_threshold{0.6, 0.65};
+    std::vector<int> param_stable_min{3};
+
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{20, 25};
+    std::vector<int> param_summarize{1000, 1500};
     std::vector<int> param_proj_dist{5, 10};
     std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
     std::vector<int> param_p_j{4, 6, 8, 10};
@@ -223,7 +242,8 @@ int main(int argc, char** argv) {
     // Step 1: Read in traces
     std::vector<trace> traces;
     //TODO: change back
-    for (int i = 0; i < trace_file_paths.size(); i++) {
+    //for (int i = 0; i < trace_file_paths.size(); i++) {
+    for (int i = 0; i < 20; i++) {
         std::cout << "# -> " << trace_file_paths[i].filename().string() << std::endl;
         traces.push_back(load(trace_file_paths[i]));
     }
