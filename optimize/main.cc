@@ -16,7 +16,6 @@
 namespace fs = boost::filesystem;
 
 // Globals
-int MAX_ITER = 4;
 int PD_WINDOW = 10'000;
 
 struct trace {
@@ -56,12 +55,13 @@ struct PhaseData {
     bool has_rr = false;
     double rr_mean = 0.0;
     double overall_mean = 0.0;
+    double pct_error = 0.0;
     uint64_t accesses_after_rr = 0;
 };
 
 using score = std::pair<double, double>; // pct swapped, RR accuracy
 
-score eval(const trace &tr, PhaseDetector pd, FtPjRG sd) {
+score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
 
     // Run phase detection
     std::map<uint64_t, int64_t> phase_map = pd.detect(tr.ip);
@@ -99,10 +99,6 @@ score eval(const trace &tr, PhaseDetector pd, FtPjRG sd) {
             continue;
         }
 
-        std::cout << current_phase << ": [" << current_start << "->" << current_end <<"]" << std::endl;
-
-        //if ((auto &cur = phase_data.find(current_phase)) != phase_data.end()) {
-        bool huh = phase_data.find(current_phase) != phase_data.end();
         if (phase_data.find(current_phase) != phase_data.end()) {
             //phase encountered before
             auto &cur = phase_data[current_phase];
@@ -115,12 +111,10 @@ score eval(const trace &tr, PhaseDetector pd, FtPjRG sd) {
             // Run SD
             const auto &[win_start0, win_size, rr_found] = sd.run(std::vector<uint64_t>(tr.latency_nano.begin() + current_start, tr.latency_nano.begin()+current_end));
 
-            std::cout << "Phase " << current_phase << ": " << rr_found << std::endl;
             if (rr_found) {
                 uint64_t win_start = win_start0 + current_start;
                 uint64_t win_end = win_start + win_size;
 
-                std::cout << " Extents: " << win_start << ", " << win_end << std::endl;
 
                 phd.has_rr = true;
                 phd.rr_mean = std::accumulate(tr.latency_nano.begin()+win_start,
@@ -130,7 +124,7 @@ score eval(const trace &tr, PhaseDetector pd, FtPjRG sd) {
                                                    tr.latency_nano.begin()+current_end,
                                                    0.0) / (phase_length);
                 phd.accesses_after_rr = current_end - win_end;
-                std::cout << " Means: " << phd.rr_mean << ", " << phd.overall_mean << std::endl;
+                phd.pct_error = abs(100*(phd.rr_mean - phd.overall_mean) / phd.overall_mean);
             } else {
                 phd.has_rr = false;
             }
@@ -139,9 +133,37 @@ score eval(const trace &tr, PhaseDetector pd, FtPjRG sd) {
 
     }
 
-    double pct_swapped = 0.0;
-    double rr_accuracy = 0.0;
+    // total time is length of trace
+    // time swapped is sum of phd.accesses_after_rr if phd.has_rr
+    uint64_t time_swapped = 0;
+    double sum_error = 0;
+    for (auto const& [phase_id, phd] : phase_data) {
+        if (phd.has_rr){
+            time_swapped += phd.accesses_after_rr;
+            sum_error += phd.accesses_after_rr*phd.pct_error;
+        }
+    }
+
+    if (time_swapped == 0) {
+        return score(0, 1);
+    }
+
+    double pct_swapped = ((double)time_swapped) / tr.ip.size();
+    double rr_accuracy = sum_error / time_swapped; // normalize based on time each was used
     return score(pct_swapped, rr_accuracy);
+}
+
+score eval_traces(const std::vector<trace> traces, PhaseDetector &pd, FtPjRG &sd) {
+    std::vector<score> scores;
+    for (auto &tr : traces) {
+        scores.push_back(eval(tr, pd, sd));
+    }
+    double sum_pct_swapped, sum_rr_accuracy;
+    for (auto &[pct_swapped, rr_accuracy] : scores){
+        sum_pct_swapped += pct_swapped;
+        sum_rr_accuracy += rr_accuracy;
+    }
+    return score(sum_pct_swapped/scores.size(), sum_rr_accuracy/scores.size());
 }
 
 int main(int argc, char** argv) {
@@ -159,7 +181,7 @@ int main(int argc, char** argv) {
         std::cout << "Error: " << argv[1] << " is not a directory.\n";
     }
 
-    std::cout << "Reading *trace.out files from [" << trace_path << "]\n";
+    std::cout << "# Reading trace.out files from [" << trace_path.string() << "]\n";
 
     std::vector<fs::path> trace_file_paths;
     for(auto& entry : boost::make_iterator_range(fs::directory_iterator(trace_path), {})) {
@@ -170,22 +192,83 @@ int main(int argc, char** argv) {
 
     // Step 1: Read in traces
     std::vector<trace> traces;
-    #pragma omp parallel for
     //TODO: change back
     //for (int i = 0; i < trace_file_paths.size(); i++) {
-    for (int i = 0; i < 1; i++) {
-        std::cout << trace_file_paths[i].filename() << std::endl;
+    for (int i = 0; i < 2; i++) {
+        std::cout << "# -> " << trace_file_paths[i].filename().string() << std::endl;
         traces.push_back(load(trace_file_paths[i]));
     }
 
+    std::cout << "# Done loading files.\n";
 
-    // Step 2: Run PD and SD
-    PhaseDetector pd(0.5, PD_WINDOW, 10, 4);
-    FtPjRG sd;
-    eval(traces[0], pd, sd);
+    // Phase detection parameters
     /*
-    for (int iter = 0; iter < 1; iter++) {
-        
-    }
+    std::vector<int> param_phase_length{50'000, 100'000, 200'000, 500'000, 1'000'000};
+    std::vector<double> param_threshold{0.4, 0.5, 0.6};
+    std::vector<int> stable_min{3, 4, 5, 6};
     */
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000};
+    std::vector<double> param_threshold{0.5};
+    std::vector<int> param_stable_min{4};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{10};
+    std::vector<int> param_summarize{500};
+    std::vector<int> param_proj_dist{5};
+    std::vector<float> param_proj_delta{2.0};
+    std::vector<int> param_p_j{4,6};
+
+    // Output header
+    std::cout  << "pct "
+               << "acc "
+               << "threshold "
+               << "phase_length "
+               << "stable_min "
+               << "window_start "
+               << "summarize "
+               << "proj_dist "
+               << "proj_delta "
+               << "p_j" << std::endl;
+
+    #pragma omp parallel for collapse(8)
+    for (int i0 = 0; i0 < param_phase_length.size(); i0++) {
+        for (int i1 = 0; i1 < param_threshold.size(); i1++) {
+            for (int i2 = 0; i2 < param_stable_min.size(); i2++) {
+                for (int i3 = 0; i3 < param_window_start.size(); i3++) {
+                    for (int i4 = 0; i4 < param_summarize.size(); i4++) {
+                        for (int i5 = 0; i5 < param_proj_dist.size(); i5++) {
+                            for (int i6 = 0; i6 < param_proj_delta.size(); i6++) {
+                                for (int i7 = 0; i7 < param_p_j.size(); i7++) {
+                                    auto pl = param_phase_length[i0];
+                                    auto th = param_threshold[i1];
+                                    auto sm = param_stable_min[i2];
+                                    auto ws = param_window_start[i3];
+                                    auto sum = param_summarize[i4];
+                                    auto di = param_proj_dist[i5];
+                                    auto de = param_proj_delta[i6];
+                                    auto pj = param_p_j[i7];
+                                    PhaseDetector pd(th, pl, 10, sm);
+                                    FtPjRG sd(ws, sum, di, de, pj);
+                                    score sc = eval_traces(traces, pd, sd);
+                                    #pragma omp critical
+                                    {
+                                    std::cout << sc.first  << " "
+                                              << sc.second << " "
+                                              << th        << " "
+                                              << pl        << " "
+                                              << sm        << " "
+                                              << ws        << " "
+                                              << sum       << " "
+                                              << di        << " "
+                                              << de        << " "
+                                              << pj        << std::endl;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
