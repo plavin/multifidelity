@@ -223,6 +223,10 @@ class FtPjRG {
 
     public:
 
+        FtPjRG() {}
+
+        FtPjRG(uint64_t window_start, int summarize, int proj_dist, float proj_delta, int p_j) : window_start(window_start), summarize(summarize), proj_dist(proj_dist), proj_delta(proj_delta), p_j(p_j) {}
+
         std::tuple<uint64_t, uint64_t, bool> run(std::vector<uint64_t> data) {
             std::deque<uint64_t> vec(data.begin(), data.end());
             return run(vec);

@@ -157,10 +157,29 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
 
 score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
     std::vector<score> scores;
+    uint64_t total_length = 0;
+    for (auto &tr : traces) {
+        scores.push_back(eval(tr, pd, sd));
+        total_length += tr.ip.size();
+    }
+    double sum_pct_swapped = 0;
+    double sum_rr_accuracy = 0;
+    int i = 0;
+    for (auto &[pct_swapped, rr_accuracy] : scores){
+        sum_pct_swapped += pct_swapped*traces[i].ip.size();
+        sum_rr_accuracy += rr_accuracy;
+        i++;
+    }
+    return score(sum_pct_swapped/total_length, sum_rr_accuracy/scores.size());
+}
+
+score eval_traces_nonormilaize(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
+    std::vector<score> scores;
     for (auto &tr : traces) {
         scores.push_back(eval(tr, pd, sd));
     }
-    double sum_pct_swapped, sum_rr_accuracy;
+    double sum_pct_swapped = 0;
+    double sum_rr_accuracy = 0;
     for (auto &[pct_swapped, rr_accuracy] : scores){
         sum_pct_swapped += pct_swapped;
         sum_rr_accuracy += rr_accuracy;
@@ -183,9 +202,8 @@ int main(int argc, char** argv) {
         std::cout << "Error: " << argv[1] << " is not a directory.\n";
     }
 
-    // Some testing defaults
-    /*
-    std::vector<int> param_phase_length{10'000, 50'000, 100'000};
+    // Old defaults
+    std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
     std::vector<int> param_stable_min{4};
     std::vector<uint64_t> param_window_start{10};
@@ -193,7 +211,6 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{2.0};
     std::vector<int> param_p_j{4};
-    */
 
     // First run
     /*
@@ -213,6 +230,7 @@ int main(int argc, char** argv) {
 
     // Second run
     // Phase detection parameters
+    /*
     std::vector<int> param_phase_length{50'000};
     std::vector<double> param_threshold{0.6, 0.65};
     std::vector<int> param_stable_min{3};
@@ -224,6 +242,24 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5, 10};
     std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
     std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+
+    // Third run
+    // Phase detection parameters
+    /*
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000};
+    std::vector<double> param_threshold{0.5, 0.6, 0.65};
+    std::vector<int> param_stable_min{3};
+
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{20, 25, 50};
+    std::vector<int> param_summarize{1000, 1500};
+    std::vector<int> param_proj_dist{5, 10};
+    std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+
 
     std::cout << "# Testing " << param_phase_length.size() * param_threshold.size() * param_stable_min.size() *
                                param_window_start.size() * param_summarize.size() * param_proj_dist.size() *
@@ -242,8 +278,8 @@ int main(int argc, char** argv) {
     // Step 1: Read in traces
     std::vector<trace> traces;
     //TODO: change back
-    //for (int i = 0; i < trace_file_paths.size(); i++) {
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < trace_file_paths.size(); i++) {
+    //for (int i = 0; i < 20; i++) {
         std::cout << "# -> " << trace_file_paths[i].filename().string() << std::endl;
         traces.push_back(load(trace_file_paths[i]));
     }

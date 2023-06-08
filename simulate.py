@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 import pickle
 from RunData import RunData
 import tempfile
+from Subsetter import subsetter
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -87,24 +88,32 @@ def parse_timing_list(stderr_list):
 
 class SimTime:
     def __init__(self, times):
-        self.mean = statistics.mean(times)
+        self.mean = statistics.mean(times)/nu.ms # time stored in ms
         if len(times) > 1:
-            self.sem = sem(times)
+            self.sem = sem(times)/nu.ms
+            self.sd = statistics.stdev(times)/nu.ms
         else:
             self.sem = 0
+            self.sd = 0
     def __repr__(self):
-        return f'{self.mean/nu.ms:.2f} (+/-{self.sem/nu.ms:.2f}) ms'
+        return f'{self.mean:.2f} (+/-{self.sd:.2f}) ms (sem {self.sem:.2f})'
 
 class SummaryRate:
     def __init__(self, times, unit):
-        self.mean = statistics.harmonic_mean(times)
-        if len(times) > 1:
-            self.sem = sem(times)
+        self.unit = unit
+        tt = times
+        while(len(tt) > 2 and statistics.stdev(tt) > 0.01):
+            tt = sorted(tt)[1:]
+
+        self.mean = statistics.harmonic_mean(tt)
+        if len(tt) > 1:
+            self.sem = sem(tt)
+            self.sd = statistics.stdev(tt)
         else:
             self.sem = 0
-        self.unit = unit
+            self.sd = 0
     def __repr__(self):
-        return f'{self.mean:.3f} (+/-{self.sem:.3f}) {self.unit}'
+        return f'{self.mean:.3f} (+/-{self.sd:.3f}) ({self.sem:.3f} sem) {self.unit}'
 
 def parse_sim_time(stdout):
     lines = stdout.split('\n')
@@ -169,11 +178,17 @@ class SimStats():
             sys.stdout.flush()
             subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
             # TODO: do data aggregation for latency
+            latency_hist, ipc = parse_statsfile(parrot_levels)
             if len(parrot_levels) > 0:
-                latency_hist, ipc = parse_statsfile(parrot_levels)
                 self.latency.append(latency_hist)
-                self.ipc.append(ipc)
-        print()
+            self.ipc.append(ipc)
+            ip_temp, ind = subsetter(self.ipc)
+            if ip_temp is not None:
+                self.ipc = ip_temp
+                continue
+                #TODO: NEED TO SUBSET other vars using `ind`
+                #if i > 0 and statistics.stdev(sorted(self.ipc)[-2:]) < 0.01 :
+                #    continue
 
         #self.stdout = subp.stdout
         #self.stderr = subp.stderr
