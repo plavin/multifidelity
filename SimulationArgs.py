@@ -16,6 +16,7 @@ class SimulationArgs:
     trace: bool           = False
     backup: bool          = False
     multifidelity: bool   = False
+    dry_run: bool         = False
     stop_at: str          = None
     rrfile: pathlib.Path  = None
     sdl: pathlib.Path     = None
@@ -38,6 +39,7 @@ class SimulationArgs:
         s += f' backup:        {self.backup}\n'
         s += f' multifidelity: {self.multifidelity}\n'
         s += f' stop_at:       {self.stop_at}\n'
+        s += f' dry_run:       {self.dry_run}\n'
         s += f' sdl:           {self.sdl}\n'
         s += f' rrfile:        {self.rrfile}\n'
         s += f' outfile:       {self.outfile}'
@@ -58,6 +60,7 @@ def parse(argv):
     parser.add_argument('-o', '--outfile', help='file to print to', type=str, required=False, default=None)
     parser.add_argument('-r', '--rrfile', help='file to read representative regions from', type=str, required=False, default=None)
     parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, default=None, dest='stop_at')
+    parser.add_argument('--dry', help='only print the sst command', required=False, action="store_true")
 
     args = parser.parse_args(argv[1:])
 
@@ -102,6 +105,7 @@ def parse(argv):
                           trace = args.trace,
                           backup = args.backup,
                           multifidelity = args.multifidelity,
+                          dry_run = args.dry,
                           sdl = sdl_path,
                           outfile = outfile_path,
                           rrfile = rr_path,
