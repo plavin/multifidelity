@@ -226,7 +226,7 @@ class SimStats():
 
 def run(sim_args):
 
-    if sim_args.backup:
+    if sim_args.backup and not sim_args.dry_run:
         temp_dir = tempfile.mkdtemp(dir='/netscratch/plavin3/simulation-backups')
         print(f'Writing backups to {temp_dir}')
 
@@ -274,12 +274,16 @@ def run(sim_args):
             parrot_list = sim_args.parrot_levels.split(',')
         else:
             parrot_list = []
-        st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
-        if sim_args.backup:
-            backup_file = os.path.join(temp_dir, f'SimStats_{bb}.pkl')
-            with open(backup_file, 'wb') as bf:
-                pickle.dump(st[bb], bf)
-            print(f'Backed up {bb} -> {backup_file}')
+
+        if (sim_args.dry_run):
+            print(f"DRY RUN: {' '.join(command)}")
+        else:
+            st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
+            if sim_args.backup:
+                backup_file = os.path.join(temp_dir, f'SimStats_{bb}.pkl')
+                with open(backup_file, 'wb') as bf:
+                    pickle.dump(st[bb], bf)
+                print(f'Backed up {bb} -> {backup_file}')
 
     return (RunData(sim_args, stats_dict, prof_str, st))
 
@@ -287,6 +291,8 @@ if __name__ == "__main__":
     sim_args = SimulationArgs.parse(sys.argv)
     print(sim_args)
     ret = run(sim_args)
+    if sim_args.dry_run:
+        sys.exit(0)
     if ret.sim_args.outfile is not None:
         with ret.sim_args.outfile.open('wb') as file:
             print(f'Dumping run data to {ret.sim_args.outfile}')
