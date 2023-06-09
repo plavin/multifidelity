@@ -15,6 +15,8 @@
 #include <boost/filesystem/fstream.hpp>
 namespace fs = boost::filesystem;
 
+#define DEBUG
+
 // Globals
 int PD_WINDOW = 10'000;
 
@@ -70,6 +72,13 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
     // append an extra entry to represent the end of the trace to simplify algo
     phase_map[tr.ip.size()] = -1;
 
+#ifdef DEBUG
+    printf(" Phase map:\n");
+    for (auto &[k, v] : phase_map) {
+        std::cout << "  " << k << ": " << v << "\n";
+    }
+#endif
+
     // Find RRs but running the stability detector on the first occurence of each phase
     // Don't treat -1 separately in this algorithm. We need it to count negatively against our score
     // But don't run the SD
@@ -114,6 +123,11 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
             const auto &[win_start0, win_size, rr_found] = sd.run(std::vector<uint64_t>(tr.latency_nano.begin() + current_start, tr.latency_nano.begin()+current_end));
 
             if (rr_found) {
+
+#ifdef DEBUG
+                std::cout << "   Phase " << current_phase << " rr: " << win_start0 << ", " << win_size << std::endl;
+#endif
+
                 uint64_t win_start = win_start0 + current_start;
                 uint64_t win_end = win_start + win_size;
 
@@ -128,6 +142,11 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
                 phd.accesses_after_rr = current_end - win_end;
                 phd.pct_error = abs(100*(phd.rr_mean - phd.overall_mean) / phd.overall_mean);
             } else {
+
+#ifdef DEBUG
+                std::cout << "   Phase " << current_phase << " NO RR" << std::endl;
+#endif
+
                 phd.has_rr = false;
             }
             phase_data[current_phase] = phd;
@@ -158,7 +177,13 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
 score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
     std::vector<score> scores;
     uint64_t total_length = 0;
+#ifdef DEBUG
+    int _i = 0;
+#endif
     for (auto &tr : traces) {
+#ifdef DEBUG
+        std::cout << "Trace " << _i++ << " - - - - -" << std::endl;
+#endif
         scores.push_back(eval(tr, pd, sd));
         total_length += tr.ip.size();
     }
@@ -170,6 +195,15 @@ score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &s
         sum_rr_accuracy += rr_accuracy;
         i++;
     }
+
+#ifdef DEBUG
+    printf("Scores:");
+    for (auto &[pct, acc] : scores) {
+        std::cout << " (" << pct << ", " << acc << ")";
+    }
+    printf("\n");
+#endif
+
     return score(sum_pct_swapped/total_length, sum_rr_accuracy/scores.size());
 }
 
@@ -203,6 +237,7 @@ int main(int argc, char** argv) {
     }
 
     // Old defaults
+    /*
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
     std::vector<int> param_stable_min{4};
@@ -210,6 +245,18 @@ int main(int argc, char** argv) {
     std::vector<int> param_summarize{500};
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{2.0};
+    std::vector<int> param_p_j{4};
+    */
+
+    // New Config
+    std::cout << "# New config\n";
+    std::vector<int> param_phase_length{10'000};
+    std::vector<double> param_threshold{0.5};
+    std::vector<int> param_stable_min{3};
+    std::vector<uint64_t> param_window_start{50};
+    std::vector<int> param_summarize{1000};
+    std::vector<int> param_proj_dist{5};
+    std::vector<float> param_proj_delta{1.0};
     std::vector<int> param_p_j{4};
 
     // First run
