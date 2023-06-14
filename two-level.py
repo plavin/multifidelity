@@ -68,7 +68,7 @@ def enableStats():
       #l2cache.enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
 
       # Define SST core options
-      sst.setProgramOption('timebase', '1ps')
+      sst.setProgramOption('timebase', '1ps') # Change to 250ps?
       sst.setStatisticLoadLevel(10)
       #sst.enableAllStatisticsForAllComponents()
 
@@ -82,7 +82,14 @@ def enableStats():
       }
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'Latency', histParams)
       sst.enableStatisticForComponentType('ariel.ariel', 'instruction_count')
+      sst.enableStatisticForComponentType('ariel.ariel', 'no_ops')
       sst.enableStatisticForComponentType('ariel.ariel', 'cycles')
+
+
+      sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_requests')
+      sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_responses')
+      sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_normal_requests')
+      sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_mf_requests')
 
       sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : os.path.join(wd,'two-level-stats.csv'), 'separator' : ', ' } )
 
