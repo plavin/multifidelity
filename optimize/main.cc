@@ -15,7 +15,7 @@
 #include <boost/filesystem/fstream.hpp>
 namespace fs = boost::filesystem;
 
-#define DEBUG
+//#define DEBUG
 
 // Globals
 int PD_WINDOW = 10'000;
@@ -237,7 +237,6 @@ int main(int argc, char** argv) {
     }
 
     // Old defaults
-    /*
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
     std::vector<int> param_stable_min{4};
@@ -246,9 +245,9 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{2.0};
     std::vector<int> param_p_j{4};
-    */
 
     // New Config
+    /*
     std::cout << "# New config\n";
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
@@ -258,6 +257,7 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{1.0};
     std::vector<int> param_p_j{4};
+    */
 
     // First run
     /*
