@@ -18,6 +18,7 @@ class SimulationArgs:
     multifidelity: bool   = False
     dry_run: bool         = False
     stop_at: str          = None
+    parrot_freq: str      = '2.0GHz'
     rrfile: pathlib.Path  = None
     sdl: pathlib.Path     = None
     outfile: pathlib.Path = None
@@ -41,6 +42,7 @@ class SimulationArgs:
         s += f' stop_at:       {self.stop_at}\n'
         s += f' dry_run:       {self.dry_run}\n'
         s += f' sdl:           {self.sdl}\n'
+        s += f' parrot_freq:   {self.parrot_freq}\n'
         s += f' rrfile:        {self.rrfile}\n'
         s += f' outfile:       {self.outfile}'
 
@@ -61,6 +63,7 @@ def parse(argv):
     parser.add_argument('-r', '--rrfile', help='file to read representative regions from', type=str, required=False, default=None)
     parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, default=None, dest='stop_at')
     parser.add_argument('--dry', help='only print the sst command', required=False, action="store_true")
+    parser.add_argument('-P', '--parrot-freq', help='speed of parrot component', type=str, required=False, default='2.0GHz')
 
     args = parser.parse_args(argv[1:])
 
@@ -106,6 +109,7 @@ def parse(argv):
                           backup = args.backup,
                           multifidelity = args.multifidelity,
                           dry_run = args.dry,
+                          parrot_freq = args.parrot_freq,
                           sdl = sdl_path,
                           outfile = outfile_path,
                           rrfile = rr_path,

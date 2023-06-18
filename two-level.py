@@ -167,10 +167,14 @@ if __name__ == '__main__':
       parser.add_argument('config_file', help='file with configs')
       parser.add_argument('benchmark', help='benchmark rom config file to run')
       parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
+      parser.add_argument('-P', '--parrot-freq', help='frequency of parrots', type=str, default='2.0GHz')
       parser.add_argument('-t', '--trace', help='enable tracing', action="store_true")
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
       parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
       args = parser.parse_args(sys.argv[1:])
+
+      if args.parrot_freq is not None:
+            params['parrot']['clock'] = args.parrot_freq
 
       parrot_levels = []
       if args.parrot_levels is not None:
