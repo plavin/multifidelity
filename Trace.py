@@ -50,6 +50,8 @@ class TraceList:
 
         self.traces = sorted([Trace(f, new_ext) for f in self.files])
 
+        self.experiment_name = pathlib.Path(data_dir).name
+
     def __getitem__(self, idx):
         return self.traces[idx]
 

@@ -57,6 +57,12 @@ bool f_test(
     double N1 = std::distance(std::get<0>(*win0), std::get<1>(*win0));
     double N2 = std::distance(std::get<0>(*win1), std::get<1>(*win1));
 
+    if (sd2 == 0) {
+        //std::cout << "-> Std.dev is too low. sd2 is " << sd2 << std::endl;
+        // can't do the test without a standard deviation
+        // maybe it should return true? (meaning we move to stage 2)
+        return false;
+    }
 
     double F = (sd1 / sd2);
     F *= F;

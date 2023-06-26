@@ -84,6 +84,7 @@ def enableStats():
       sst.enableStatisticForComponentType('ariel.ariel', 'instruction_count')
       sst.enableStatisticForComponentType('ariel.ariel', 'no_ops')
       sst.enableStatisticForComponentType('ariel.ariel', 'cycles')
+      sst.enableStatisticForComponentType('ariel.ariel', 'latency')
 
 
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_requests')

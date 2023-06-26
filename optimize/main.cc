@@ -237,6 +237,7 @@ int main(int argc, char** argv) {
     }
 
     // Old defaults
+    /*
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
     std::vector<int> param_stable_min{4};
@@ -245,9 +246,9 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{2.0};
     std::vector<int> param_p_j{4};
+    */
 
     // New Config
-    /*
     std::cout << "# New config\n";
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
@@ -257,7 +258,6 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{1.0};
     std::vector<int> param_p_j{4};
-    */
 
     // First run
     /*
@@ -292,12 +292,11 @@ int main(int argc, char** argv) {
     */
 
     // Third run
-    // Phase detection parameters
     /*
+    // Phase detection parameters
     std::vector<int> param_phase_length{10'000, 50'000, 100'000};
     std::vector<double> param_threshold{0.5, 0.6, 0.65};
     std::vector<int> param_stable_min{3};
-
 
     // Stability detection parameters
     std::vector<uint64_t> param_window_start{20, 25, 50};
@@ -305,6 +304,20 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5, 10};
     std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
     std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+
+    // Jun14 optimizer config
+    // 0.5  50000   3   50  1500    10  2.0     8
+    /*
+    std::cout << "# Jun 14 optimizer config\n";
+    std::vector<double>   param_threshold{0.5};
+    std::vector<int>      param_phase_length{50'000};
+    std::vector<int>      param_stable_min{3};
+    std::vector<uint64_t> param_window_start{50};
+    std::vector<int>      param_summarize{1500};
+    std::vector<int>      param_proj_dist{10};
+    std::vector<float>    param_proj_delta{2.0};
+    std::vector<int>      param_p_j{8};
     */
 
 
@@ -326,7 +339,6 @@ int main(int argc, char** argv) {
     std::vector<trace> traces;
     //TODO: change back
     for (int i = 0; i < trace_file_paths.size(); i++) {
-    //for (int i = 0; i < 20; i++) {
         std::cout << "# -> " << trace_file_paths[i].filename().string() << std::endl;
         traces.push_back(load(trace_file_paths[i]));
     }
