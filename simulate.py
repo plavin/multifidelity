@@ -16,6 +16,11 @@ import pickle
 from RunData import RunData
 import tempfile
 from Subsetter import subsetter
+import shutil
+from multiprocessing import Process, Queue
+
+sys.path.insert(0, './python')
+import SimulationUtilities as SimUtil
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -120,10 +125,12 @@ def parse_sim_time(stdout):
     for l in lines:
         if 'Simulation is complete' in l:
             tm = l.split()[5:7]
-            if tm[1] != 'ms':
-                print(f'Error: Unrecognized time unit: {tm[1]}')
-                sys.exit(1)
-            return float(tm[0]) * nu.ms
+            if tm[1] == 'ms':
+                return float(tm[0]) * nu.ms
+            elif tm[1] == 'us':
+                return float(tm[0]) * nu.us
+            print(f'Error: Unrecognized time unit: {tm[1]}')
+            sys.exit(1)
     print('FATAL ERROR: Simulation failed to complete. Please inspect output. TODO: Note location of output')
     sys.exit(1)
 
@@ -174,7 +181,7 @@ class SimStats():
         self.ipc = []
         self.nruns = nruns
         for i in range(self.nruns):
-            print(f'{i+1}/{self.nruns}', end=' ')
+            #print(f'{i+1}/{self.nruns}', end=' ')
             sys.stdout.flush()
             subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
             # TODO: do data aggregation for latency
@@ -224,11 +231,26 @@ class SimStats():
 
         return s
 
-def run(sim_args):
+def run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args):
+    st = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
+    if sim_args.backup:
+        backup_file = backup_dir.joinpath(f'SimStats_{bb}.pkl')
+        with open(backup_file, 'wb') as bf:
+            pickle.dump(st, bf)
+    return_queue.put((bb, st))
+    return st
+
+def run(sim_args, project_dir):
 
     if sim_args.backup and not sim_args.dry_run:
-        temp_dir = tempfile.mkdtemp(dir='/netscratch/plavin3/simulation-backups')
-        print(f'Writing backups to {temp_dir}')
+        backup_dir = project_dir.joinpath('backup')
+        backup_dir.mkdir()
+
+    trace_dir = None
+    if sim_args.trace:
+        trace_dir = project_dir.joinpath('trace')
+        if not sim_args.dry_run:
+            trace_dir.mkdir()
 
     stop_at = '100ms'
     if sim_args.stop_at is not None:
@@ -242,9 +264,12 @@ def run(sim_args):
 
     prof_str = build_profiling_string(stats_dict)
 
+    return_queue = Queue()
+
     st = {}
+    procs = []
     for bb in sim_args.benchmarks:
-        print(f'Simulating [{bb}] [{sim_args.nruns} times] ', end='')
+        print(f'Simulating [{bb}] [{sim_args.nruns} times] ')
         sys.stdout.flush()
 
         sdl_args = [str(sim_args.config_file), str(bb)]
@@ -258,6 +283,7 @@ def run(sim_args):
             sdl_args.append('-M')
         if sim_args.trace:
             sdl_args.append('-t')
+            sdl_args.append(str(trace_dir.resolve()))
         if sim_args.rrfile:
             sdl_args.append('-r')
             sdl_args.append(str(sim_args.rrfile.resolve()))
@@ -281,27 +307,60 @@ def run(sim_args):
         if (sim_args.dry_run):
             print(f"DRY RUN: {' '.join(command)}")
         else:
-            st[bb] = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
-            if sim_args.backup:
-                backup_file = os.path.join(temp_dir, f'SimStats_{bb}.pkl')
-                with open(backup_file, 'wb') as bf:
-                    pickle.dump(st[bb], bf)
-                print(f'Backed up {bb} -> {backup_file}')
+            procs.append(Process(target=run_one, args=(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args,)))
+            procs[-1].start()
+            #st[bb] = run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args)
+
+    for p in procs:
+        p.join()
+
+    while not return_queue.empty():
+        val = return_queue.get()
+        st[val[0]] = val[1]
 
     return (RunData(sim_args, stats_dict, prof_str, st))
 
 if __name__ == "__main__":
     sim_args = SimulationArgs.parse(sys.argv)
     print(sim_args)
-    ret = run(sim_args)
+
+    # Only need this if we're going to save some info
+    if sim_args.trace or sim_args.backup:
+        project_dir = SimUtil.make_project_dir('experiment-results', dry_run=sim_args.dry_run)
+        info_str = f'Experiment data will be stored in: {project_dir}'
+        print(info_str)
+        print('-'*len(info_str))
+    else:
+        project_dir = None
+
+    # Store configuration info
+    if not sim_args.dry_run and sim_args.backup:
+        config_dir = project_dir.joinpath('config')
+        config_dir.mkdir()
+        simconfig_file = config_dir.joinpath('SimConfig.txt')
+        with open(simconfig_file, 'w') as file:
+            file.write(' '.join(sys.argv))
+            file.write('\n')
+            file.write(str(sim_args))
+        #print(f'copy from {sim_args.config_file} to {project_dir.joinpath(sim_args.config_file)}')
+        shutil.copy(str(sim_args.config_file), str(config_dir.joinpath(sim_args.config_file)))
+        shutil.copy(str(sim_args.sdl), str(config_dir.joinpath(sim_args.sdl)))
+
+    ret = run(sim_args, project_dir)
     if sim_args.dry_run:
         sys.exit(0)
-    if ret.sim_args.outfile is not None:
-        with ret.sim_args.outfile.open('wb') as file:
-            print(f'Dumping run data to {ret.sim_args.outfile}')
+    if sim_args.backup:
+        backup_file = project_dir.joinpath('SimStats.pkl')
+        with open(backup_file, 'wb') as file:
             pickle.dump(ret, file)
-    else:
-        for key in ret.st:
-            print(f'\n{key} ' + '-'*30)
-            print(ret.st[key])
+
+    # Just use -B from now on. And don't pint out the profiler, that's kind of annoying
+    #if ret.sim_args.outfile is not None:
+    #    with ret.sim_args.outfile.open('wb') as file:
+    #        print(f'Dumping run data to {ret.sim_args.outfile}')
+    #        pickle.dump(ret, file)
+    #else:
+    #    for key in ret.st:
+    #        print(f'\n{key} ' + '-'*30)
+    #        print(ret.st[key])
     print('Done')

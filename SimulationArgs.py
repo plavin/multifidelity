@@ -17,7 +17,7 @@ class SimulationArgs:
     backup: bool          = False
     multifidelity: bool   = False
     dry_run: bool         = False
-    stop_at: str          = None
+    stop_at: str          = '100ms'
     parrot_freq: str      = '2.0GHz'
     rrfile: pathlib.Path  = None
     sdl: pathlib.Path     = None
@@ -61,7 +61,7 @@ def parse(argv):
     parser.add_argument('-M', '--multifidelity', help='enable multifidelity', required=False, action="store_true")
     parser.add_argument('-o', '--outfile', help='file to print to', type=str, required=False, default=None)
     parser.add_argument('-r', '--rrfile', help='file to read representative regions from', type=str, required=False, default=None)
-    parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, default=None, dest='stop_at')
+    parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, dest='stop_at', default='100ms')
     parser.add_argument('--dry', help='only print the sst command', required=False, action="store_true")
     parser.add_argument('-P', '--parrot-freq', help='speed of parrot component', type=str, required=False, default='2.0GHz')
 
@@ -71,7 +71,6 @@ def parse(argv):
         raise FileNotFoundError(f'Config file ({args.config_file}) was not found')
 
     sdl_path = pathlib.Path(args.sdl_file)
-    print(f'sdl_path {sdl_path}')
     if not sdl_path.is_file():
         raise FileNotFoundError(f'SDL File ({args.sdl_file}) was not found')
 
@@ -99,7 +98,6 @@ def parse(argv):
     else:
         benchlist = [*configs.keys()]
 
-    print(bool(args.trace))
     return SimulationArgs(config = get_configs(args.config_file),
                           config_file = args.config_file,
                           benchmarks = benchlist,

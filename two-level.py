@@ -169,7 +169,7 @@ if __name__ == '__main__':
       parser.add_argument('benchmark', help='benchmark rom config file to run')
       parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
       parser.add_argument('-P', '--parrot-freq', help='frequency of parrots', type=str, default='2.0GHz')
-      parser.add_argument('-t', '--trace', help='enable tracing', action="store_true")
+      parser.add_argument('-t', '--trace', help='enable tracing and specify directory to store trace', type=str, default=None)
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
       parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
       args = parser.parse_args(sys.argv[1:])
@@ -234,9 +234,9 @@ if __name__ == '__main__':
       for level in parrot_levels:
             parrots[level].addParams(params['parrot'])
 
-            if args.trace:
+            if args.trace is not None:
                   parrots[level].addParams({'enable_tracing' : True,
-                                            'trace_prefix' : f'/nethome/plavin3/sst/spec-utils/parrot-traces/Parrot_{level}_{benchName}'})
+                                            'trace_prefix' : f'{args.trace}/Parrot_{level}_{benchName}'})
             if args.rrfile is not None:
                    parrots[level].addParams({'rr_temp' : f'{args.rrfile} {benchName}'})
 
