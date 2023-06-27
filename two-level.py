@@ -4,6 +4,7 @@ import sst
 from ariel_utils import parseAriel
 import SimulationArgs
 import argparse
+import pathlib
 
 
 # Globals
@@ -60,7 +61,7 @@ def parseConfig(config_filename, bench):
 
       return ariel_command, allconfig[bench]['directory'], arielmode
 
-def enableStats():
+def enableStats(stats_file):
       # Satatistics
       #for i in range(NCORES):
       #      l1cache[i].enableStatistics(['GetS_recv','CacheHits', 'CacheMisses','TotalEventsReceived','MSHR_occupancy' ])
@@ -92,7 +93,7 @@ def enableStats():
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_normal_requests')
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_mf_requests')
 
-      sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : os.path.join(wd,'two-level-stats.csv'), 'separator' : ', ' } )
+      sst.setStatisticOutput('sst.statOutputCSV', {'filepath' : stats_file, 'separator' : ', ' } )
 
 params = {
       'core' : {
@@ -172,6 +173,7 @@ if __name__ == '__main__':
       parser.add_argument('-t', '--trace', help='enable tracing and specify directory to store trace', type=str, default=None)
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
       parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
+      parser.add_argument('-S', '--stats-file', help='where to put the output stats', default=os.path.join(os.getcwd(), 'two-level-stats.py'))
       args = parser.parse_args(sys.argv[1:])
 
       if args.parrot_freq is not None:
@@ -199,7 +201,8 @@ if __name__ == '__main__':
 
       # Save our current directory before chaning to the one that
       # the benchmark needs
-      wd = os.getcwd()
+      stats_file = pathlib.Path(args.stats_file)
+
       os.chdir(directory)
 
       # Print run information
@@ -299,4 +302,4 @@ if __name__ == '__main__':
                     (memctrl, 'direct_link',   LATENCY) )
 
       # Enable statistics
-      enableStats()
+      enableStats(stats_file)

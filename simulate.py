@@ -17,10 +17,13 @@ from RunData import RunData
 import tempfile
 from Subsetter import subsetter
 import shutil
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool, Manager
 
 sys.path.insert(0, './python')
 import SimulationUtilities as SimUtil
+
+def custom_error_callback(error):
+        print(f'Got error: {error}')
 
 def build_profiling_string(profilers):
     if len(profilers) < 1:
@@ -159,8 +162,8 @@ class histogram:
         ret = 'Histogram: '
         return str(self.data)
 
-def parse_statsfile(parrot_levels):
-    df = pd.read_csv('two-level-stats.csv', delimiter=', ', engine='python')
+def parse_statsfile(parrot_levels, stats_file):
+    df = pd.read_csv(stats_file, delimiter=', ', engine='python')
     res = {}
     for level in parrot_levels:
         res[level] = histogram(df[df['ComponentName'] == f'Parrot_{level}'])
@@ -169,7 +172,7 @@ def parse_statsfile(parrot_levels):
     return res, instr_count/cycles
 
 class SimStats():
-    def __init__(self, command, prof_config, parrot_levels, nruns):
+    def __init__(self, command, prof_config, parrot_levels, nruns, stats_file):
 
         self.command = command
         self.prof_config = prof_config
@@ -185,7 +188,7 @@ class SimStats():
             sys.stdout.flush()
             subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
             # TODO: do data aggregation for latency
-            latency_hist, ipc = parse_statsfile(parrot_levels)
+            latency_hist, ipc = parse_statsfile(parrot_levels, stats_file)
             if len(parrot_levels) > 0:
                 self.latency.append(latency_hist)
             self.ipc.append(ipc)
@@ -231,8 +234,8 @@ class SimStats():
 
         return s
 
-def run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args):
-    st = SimStats(command, stats_dict, parrot_list, sim_args.nruns)
+def run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args, stats_file):
+    st = SimStats(command, stats_dict, parrot_list, sim_args.nruns, stats_file)
     if sim_args.backup:
         backup_file = backup_dir.joinpath(f'SimStats_{bb}.pkl')
         with open(backup_file, 'wb') as bf:
@@ -262,17 +265,25 @@ def run(sim_args, project_dir):
                   'EventStats' : 'sst.profile.handler.event.time.high_resolution(level=type)[event]'
                  }
 
+    stats_dir = project_dir.joinpath('stats')
+    if not sim_args.dry_run:
+        stats_dir.mkdir()
     prof_str = build_profiling_string(stats_dict)
 
-    return_queue = Queue()
+    manager = Manager()
+    return_queue = manager.Queue()
 
     st = {}
-    procs = []
+    pool = Pool()
     for bb in sim_args.benchmarks:
         print(f'Simulating [{bb}] [{sim_args.nruns} times] ')
         sys.stdout.flush()
 
+        stats_file = stats_dir.joinpath(f'two-level-stats-{bb}.csv')
+
         sdl_args = [str(sim_args.config_file), str(bb)]
+        sdl_args.append('-S')
+        sdl_args.append(str(stats_file))
         if sim_args.parrot_levels != '':
             sdl_args.append('-p')
             sdl_args.append(str(sim_args.parrot_levels))
@@ -307,12 +318,11 @@ def run(sim_args, project_dir):
         if (sim_args.dry_run):
             print(f"DRY RUN: {' '.join(command)}")
         else:
-            procs.append(Process(target=run_one, args=(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args,)))
-            procs[-1].start()
+            pool.apply_async(run_one, args=(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args, stats_file), error_callback=custom_error_callback)
             #st[bb] = run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_args)
 
-    for p in procs:
-        p.join()
+    pool.close()
+    pool.join()
 
     while not return_queue.empty():
         val = return_queue.get()
