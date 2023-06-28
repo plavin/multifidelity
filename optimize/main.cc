@@ -21,6 +21,7 @@ namespace fs = boost::filesystem;
 int PD_WINDOW = 10'000;
 
 struct trace {
+    std::string name;
     std::vector<uint64_t> ip;
     std::vector<uint64_t> latency_nano;
 };
@@ -28,11 +29,23 @@ struct trace {
 trace load(fs::path p, uint64_t max=0) {
     fs::ifstream file(p);
 
+    // Format is Parrot_l1_BENCHMARK.latency_trace.out
+    // Algo: benchmark name is between second underscore and first dot
+    std::string pf = p.filename().string();
+    auto name_start = pf.find("_");
+    name_start = pf.find("_", name_start+1);
+    auto name_end = pf.find(".", name_start+1);
+
+    std::string name = pf.substr(name_start+1, name_end-name_start-1);
+
+
     std::string line;
     uint64_t ip, threadID, addr, latency_nano;
     int64_t phase;
     char rwf;
     trace t;
+
+    t.name = name;
 
     // skip header
     getline(file, line);
@@ -64,6 +77,14 @@ struct PhaseData {
 };
 
 using score = std::pair<double, double>; // pct swapped, RR accuracy
+
+struct TraceScore {
+    std::string name;
+    double pct;
+    double err;
+    uint64_t len;
+    TraceScore(std::string name, double pct, double err, uint64_t len) : name(name), pct(pct), err(err), len(len) {};
+};
 
 score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
 
@@ -174,7 +195,8 @@ score eval(const trace &tr, PhaseDetector &pd, FtPjRG &sd) {
     return score(pct_swapped, rr_accuracy);
 }
 
-score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
+std::vector<TraceScore> eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
+    std::vector<TraceScore> ts;
     std::vector<score> scores;
     uint64_t total_length = 0;
 #ifdef DEBUG
@@ -184,9 +206,12 @@ score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &s
 #ifdef DEBUG
         std::cout << "Trace " << _i++ << " - - - - -" << std::endl;
 #endif
-        scores.push_back(eval(tr, pd, sd));
-        total_length += tr.ip.size();
+        //scores.push_back(eval(tr, pd, sd));
+        auto e = eval(tr, pd, sd);
+        ts.push_back(TraceScore(tr.name, e.first, e.second, tr.ip.size()));
+        //total_length += tr.ip.size();
     }
+    /*
     double sum_pct_swapped = 0;
     double sum_rr_accuracy = 0;
     int i = 0;
@@ -195,6 +220,7 @@ score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &s
         sum_rr_accuracy += rr_accuracy;
         i++;
     }
+    */
 
 #ifdef DEBUG
     printf("Scores:");
@@ -204,7 +230,8 @@ score eval_traces(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &s
     printf("\n");
 #endif
 
-    return score(sum_pct_swapped/total_length, sum_rr_accuracy/scores.size());
+    //return score(sum_pct_swapped/total_length, sum_rr_accuracy/scores.size());
+    return ts;
 }
 
 score eval_traces_nonormilaize(const std::vector<trace> &traces, PhaseDetector &pd, FtPjRG &sd) {
@@ -346,8 +373,10 @@ int main(int argc, char** argv) {
     std::cout << "# Done loading files.\n";
 
     // Output header
-    std::cout  << "pct "
-               << "acc "
+    std::cout  << "benchmark "
+               << "pct "
+               << "err "
+               << "len "
                << "threshold "
                << "phase_length "
                << "stable_min "
@@ -376,19 +405,23 @@ int main(int argc, char** argv) {
                                     auto pj = param_p_j[i7];
                                     PhaseDetector pd(th, pl, 10, sm);
                                     FtPjRG sd(ws, sum, di, de, pj);
-                                    score sc = eval_traces(traces, pd, sd);
+                                    auto ts = eval_traces(traces, pd, sd);
                                     #pragma omp critical
                                     {
-                                    std::cout << sc.first  << " "
-                                              << sc.second << " "
-                                              << th        << " "
-                                              << pl        << " "
-                                              << sm        << " "
-                                              << ws        << " "
-                                              << sum       << " "
-                                              << di        << " "
-                                              << de        << " "
-                                              << pj        << std::endl;
+                                    for (auto &t : ts) {
+                                        std::cout << t.name   << " "
+                                                  << t.pct    << " "
+                                                  << t.err    << " "
+                                                  << t.len    << " "
+                                                  << th        << " "
+                                                  << pl        << " "
+                                                  << sm        << " "
+                                                  << ws        << " "
+                                                  << sum       << " "
+                                                  << di        << " "
+                                                  << de        << " "
+                                                  << pj        << std::endl;
+                                        }
                                     }
                                 }
                             }
