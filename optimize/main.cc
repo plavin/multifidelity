@@ -249,6 +249,7 @@ int main(int argc, char** argv) {
     */
 
     // New Config
+    /*
     std::cout << "# New config\n";
     std::vector<int> param_phase_length{10'000};
     std::vector<double> param_threshold{0.5};
@@ -258,6 +259,7 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5};
     std::vector<float> param_proj_delta{1.0};
     std::vector<int> param_p_j{4};
+    */
 
     // First run
     /*
@@ -292,19 +294,17 @@ int main(int argc, char** argv) {
     */
 
     // Third run
-    /*
     // Phase detection parameters
     std::vector<int> param_phase_length{10'000, 50'000, 100'000};
     std::vector<double> param_threshold{0.5, 0.6, 0.65};
     std::vector<int> param_stable_min{3};
 
     // Stability detection parameters
-    std::vector<uint64_t> param_window_start{20, 25, 50};
+    std::vector<uint64_t> param_window_start{20, 25, 50, 75};
     std::vector<int> param_summarize{1000, 1500};
-    std::vector<int> param_proj_dist{5, 10};
-    std::vector<float> param_proj_delta{0.5, 1.0, 2.0};
+    std::vector<int> param_proj_dist{5, 10, 15};
+    std::vector<float> param_proj_delta{0.25, 0.5, 1.0, 2.0};
     std::vector<int> param_p_j{4, 6, 8, 10};
-    */
 
     // Jun14 optimizer config
     // 0.5  50000   3   50  1500    10  2.0     8
