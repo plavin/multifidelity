@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Mapper:
-    def __init__(self, size):
+    def __init__(self, size, sharex=False):
         self.size = size
         self.smallest_sq = int(np.ceil(np.sqrt(self.size)))
 
@@ -14,7 +14,7 @@ class Mapper:
         # Only need enough rows to fit up to size elements
         self.nrows = int(np.ceil(self.size / self.ncols))
 
-        self.fig, self.ax = plt.subplots(nrows = self.nrows, ncols=self.ncols, sharey=True)
+        self.fig, self.ax = plt.subplots(nrows = self.nrows, ncols=self.ncols, sharey=True, sharex=sharex)
 
     def get_remainder(self):
         # Any spots that wouldn't be full go here
