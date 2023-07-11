@@ -18,6 +18,7 @@ import tempfile
 from Subsetter import subsetter
 import shutil
 from multiprocessing import Process, Queue, Pool, Manager
+import pathlib
 
 sys.path.insert(0, './python')
 import SimulationUtilities as SimUtil
@@ -245,6 +246,7 @@ def run_one(command, stats_dict, parrot_list, backup_dir, bb, return_queue, sim_
 
 def run(sim_args, project_dir):
 
+    backup_dir = None
     if sim_args.backup and not sim_args.dry_run:
         backup_dir = project_dir.joinpath('backup')
         backup_dir.mkdir()
@@ -265,9 +267,12 @@ def run(sim_args, project_dir):
                   'EventStats' : 'sst.profile.handler.event.time.high_resolution(level=type)[event]'
                  }
 
-    stats_dir = project_dir.joinpath('stats')
+    if project_dir is not None:
+        stats_dir = project_dir.joinpath('stats')
+    else:
+        stats_dir = pathlib.Path('stats/').resolve()
     if not sim_args.dry_run:
-        stats_dir.mkdir()
+        stats_dir.mkdir(exist_ok=True)
     prof_str = build_profiling_string(stats_dict)
 
     manager = Manager()
@@ -341,6 +346,7 @@ if __name__ == "__main__":
         print(info_str)
         print('-'*len(info_str))
     else:
+        pass
         project_dir = None
 
     # Store configuration info

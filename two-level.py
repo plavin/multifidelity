@@ -107,6 +107,7 @@ params = {
             'envparamval1'    : '/nethome/plavin3/sst/sst-tools/tools/ariel/api:/nethome/plavin3/sst/DRAMsim3-1.0.0:/nethome/plavin3/sst/pin-3.23/intel64/lib:/usr/lib64/openmpi/lib:/nethome/plavin3/sst/sst-tools/tools/ariel/api:/nethome/plavin3/sst/DRAMsim3-1.0.0:/nethome/plavin3/sst/pin-3.23/intel64/lib:/usr/lib64/openmpi/lib:/opt/slurm/current/lib',
             'clock'          : CORE_FREQ,
             'arielmode'      : 1,
+            'maxissuepercycle': 1,
       },
 
       'l1cache' : {
