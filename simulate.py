@@ -295,6 +295,9 @@ def run(sim_args, project_dir):
         if sim_args.parrot_freq != '':
             sdl_args.append('-P')
             sdl_args.append(str(sim_args.parrot_freq))
+        if sim_args.l1_cache != '':
+            sdl_args.append('-z')
+            sdl_args.append(str(sim_args.l1_cache))
         if sim_args.multifidelity:
             sdl_args.append('-M')
         if sim_args.trace:

@@ -171,11 +171,15 @@ if __name__ == '__main__':
       parser.add_argument('benchmark', help='benchmark rom config file to run')
       parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
       parser.add_argument('-P', '--parrot-freq', help='frequency of parrots', type=str, default='2.0GHz')
+      parser.add_argument('-z', '--l1-cache', help='size of l1 cache', type=str, default='4KiB')
       parser.add_argument('-t', '--trace', help='enable tracing and specify directory to store trace', type=str, default=None)
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
       parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
       parser.add_argument('-S', '--stats-file', help='where to put the output stats', default=os.path.join(os.getcwd(), 'two-level-stats.py'))
       args = parser.parse_args(sys.argv[1:])
+
+      if args.l1_cache is not None:
+            params['l1cache']['cache_size'] = args.l1_cache
 
       if args.parrot_freq is not None:
             params['parrot']['clock'] = args.parrot_freq

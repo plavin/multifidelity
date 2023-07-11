@@ -22,6 +22,7 @@ class SimulationArgs:
     rrfile: pathlib.Path  = None
     sdl: pathlib.Path     = None
     outfile: pathlib.Path = None
+    l1_cache: str        = '4KiB'
 
     def __str__(self):
         if self.outfile is None:
@@ -40,6 +41,7 @@ class SimulationArgs:
         s += f' backup:        {self.backup}\n'
         s += f' multifidelity: {self.multifidelity}\n'
         s += f' stop_at:       {self.stop_at}\n'
+        s += f' l1_cache:      {self.l1_cache}\n'
         s += f' dry_run:       {self.dry_run}\n'
         s += f' sdl:           {self.sdl}\n'
         s += f' parrot_freq:   {self.parrot_freq}\n'
@@ -64,6 +66,7 @@ def parse(argv):
     parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, dest='stop_at', default='100ms')
     parser.add_argument('--dry', help='only print the sst command', required=False, action="store_true")
     parser.add_argument('-P', '--parrot-freq', help='speed of parrot component', type=str, required=False, default='2.0GHz')
+    parser.add_argument('-z', '--l1-cache', help='size of l1 cahce', type=str, required=False, default='4KiB')
 
     args = parser.parse_args(argv[1:])
 
@@ -108,6 +111,7 @@ def parse(argv):
                           multifidelity = args.multifidelity,
                           dry_run = args.dry,
                           parrot_freq = args.parrot_freq,
+                          l1_cache = args.l1_cache,
                           sdl = sdl_path,
                           outfile = outfile_path,
                           rrfile = rr_path,
