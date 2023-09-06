@@ -35,3 +35,10 @@ This README covers the workflow for woking with SPEC CPU and Ariel.
 
   - For example, run `./simulate.py song_pattest_3.py spec_ariel_test.py 0` to run the first benchmark (index 0)
 
+  
+# Directories
+
+1. `data-collection-scripts/`: Scripts used to invoke the `./simulation` command. These scripts should be copied to this directory to run properly.
+2. `libftprjg/`: Stability detector library code
+3. `libpd/`: Phase detector library code
+4. `plots/`: Plots used in my dissertation and in the MEMSYS paper
