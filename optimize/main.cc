@@ -321,6 +321,7 @@ int main(int argc, char** argv) {
     */
 
     // Third run
+    /*
     // Phase detection parameters
     std::vector<int> param_phase_length{10'000, 50'000, 100'000};
     std::vector<double> param_threshold{0.5, 0.6, 0.65};
@@ -332,6 +333,74 @@ int main(int argc, char** argv) {
     std::vector<int> param_proj_dist{5, 10, 15};
     std::vector<float> param_proj_delta{0.25, 0.5, 1.0, 2.0};
     std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+
+    // Fourth run
+    /*
+    // Phase detection parameters
+    std::vector<int> param_phase_length{100'000};
+    std::vector<double> param_threshold{0.65};
+    std::vector<int> param_stable_min{3};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{75, 100};
+    std::vector<int> param_summarize{1500, 2000};
+    std::vector<int> param_proj_dist{5, 10, 15, 20};
+    std::vector<float> param_proj_delta{2.0, 2.5, 3.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+    // Spatter 1
+    /*
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
+    std::vector<double> param_threshold{0.5, 0.65};
+    std::vector<int> param_stable_min{3};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{20, 25, 50, 75, 100};
+    std::vector<int> param_summarize{500, 1000, 1500, 2000};
+    std::vector<int> param_proj_dist{5, 10, 15, 20};
+    std::vector<float> param_proj_delta{2.0, 2.5, 3.0, 4.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+    */
+    // Spatter 2
+    /*
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
+    std::vector<double> param_threshold{0.5, 0.65};
+    std::vector<int> param_stable_min{3};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{10, 20, 25, 50, 75, 100};
+    std::vector<int> param_summarize{50, 100, 200, 500, 1000};
+    std::vector<int> param_proj_dist{5};
+    std::vector<float> param_proj_delta{2.0, 3.0};
+    std::vector<int> param_p_j{2, 4, 6};
+    */
+    // Spatter 3
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
+    std::vector<double> param_threshold{0.5, 0.65};
+    std::vector<int> param_stable_min{3};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{10, 20, 25, 50, 75, 100};
+    std::vector<int> param_summarize{50, 100, 200, 500, 1000};
+    std::vector<int> param_proj_dist{5};
+    std::vector<float> param_proj_delta{3.0};
+    std::vector<int> param_p_j{2};
+
+
+    // SPEC
+    /*
+    std::vector<int> param_phase_length{10'000, 50'000, 100'000, 200'000};
+    std::vector<double> param_threshold{0.5, 0.65};
+    std::vector<int> param_stable_min{3, 4, 5};
+
+    // Stability detection parameters
+    std::vector<uint64_t> param_window_start{20, 25, 50, 75, 100, 200};
+    std::vector<int> param_summarize{1500, 2000, 2500};
+    std::vector<int> param_proj_dist{5, 10, 15, 20};
+    std::vector<float> param_proj_delta{2.0, 2.5, 3.0};
+    std::vector<int> param_p_j{4, 6, 8, 10};
+    */
 
     // Jun14 optimizer config
     // 0.5  50000   3   50  1500    10  2.0     8

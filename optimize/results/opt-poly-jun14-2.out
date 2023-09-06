@@ -1,0 +1,12 @@
+# Testing 1 configurations 
+# Reading [30] trace.out files from [../parrot-traces/polybench-normal-jun14/]
+# -> Parrot_l1_correlation.latency_trace.out
+# -> Parrot_l1_adi.latency_trace.out
+# -> Parrot_l1_durbin.latency_trace.out
+# -> Parrot_l1_gramschmidt.latency_trace.out
+# -> Parrot_l1_atax.latency_trace.out
+# -> Parrot_l1_syrk.latency_trace.out
+# -> Parrot_l1_ludcmp.latency_trace.out
+# Done loading files.
+pct acc threshold phase_length stable_min window_start summarize proj_dist proj_delta p_j
+-> Std.dev is too low. sd2 is 0
