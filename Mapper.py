@@ -3,9 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Mapper:
-    def __init__(self, size, sharex=False):
+    def __init__(self, size, sharex=False, max_x=None):
         self.size = size
-        self.smallest_sq = int(np.ceil(np.sqrt(self.size)))
+        if max_x is not None:
+            if max_x > size:
+                raise ValueError('`max_x` cannot be larger than `size`')
+            self.smallest_sq = max_x
+        else:
+            self.smallest_sq = int(np.ceil(np.sqrt(self.size)))
 
         # There will never be a non-full first row
         self.ncols = self.smallest_sq

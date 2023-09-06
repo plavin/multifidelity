@@ -170,7 +170,7 @@ def parse_statsfile(parrot_levels, stats_file):
         res[level] = histogram(df[df['ComponentName'] == f'Parrot_{level}'])
     instr_count = list(df[(df['ComponentName']=='Ariel') & (df['StatisticName']=='instruction_count')]['Count.u64'])[0]
     cycles = list(df[(df['ComponentName']=='Ariel') & (df['StatisticName']=='cycles')]['Count.u64'])[0]
-    return res, instr_count/cycles
+    return df, res, instr_count/cycles
 
 class SimStats():
     def __init__(self, command, prof_config, parrot_levels, nruns, stats_file):
@@ -184,12 +184,14 @@ class SimStats():
         self.latency = []
         self.ipc = []
         self.nruns = nruns
+        self.stats_df = []
         for i in range(self.nruns):
             #print(f'{i+1}/{self.nruns}', end=' ')
             sys.stdout.flush()
             subp.append(subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', check=True))
             # TODO: do data aggregation for latency
-            latency_hist, ipc = parse_statsfile(parrot_levels, stats_file)
+            ddf, latency_hist, ipc = parse_statsfile(parrot_levels, stats_file)
+            self.stats_df.append(ddf)
             if len(parrot_levels) > 0:
                 self.latency.append(latency_hist)
             self.ipc.append(ipc)
@@ -303,6 +305,9 @@ def run(sim_args, project_dir):
         if sim_args.trace:
             sdl_args.append('-t')
             sdl_args.append(str(trace_dir.resolve()))
+        if sim_args.ncores:
+            sdl_args.append('-N')
+            sdl_args.append(str(sim_args.ncores))
         if sim_args.rrfile:
             sdl_args.append('-r')
             sdl_args.append(str(sim_args.rrfile.resolve()))

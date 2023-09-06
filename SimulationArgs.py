@@ -13,6 +13,7 @@ class SimulationArgs:
     benchmarks: list      = field(default_factory=list)
     parrot_levels: str    = ''
     nruns: int            = 1
+    ncores: int           = 1
     trace: bool           = False
     backup: bool          = False
     multifidelity: bool   = False
@@ -37,6 +38,7 @@ class SimulationArgs:
 
         s += f' parrot_levels: {self.parrot_levels}\n'
         s += f' nruns:         {self.nruns}\n'
+        s += f' ncores:        {self.ncores}\n'
         s += f' trace:         {self.trace}\n'
         s += f' backup:        {self.backup}\n'
         s += f' multifidelity: {self.multifidelity}\n'
@@ -58,6 +60,7 @@ def parse(argv):
     parser.add_argument('-b', '--benchmarks', help='comma separated list of benchmarks from the config', type=str, required=False, default='all')
     parser.add_argument('-p', '--parrot-levels', help='comma separated list of cache levels to enable the Parrot on', type=str, required=False, default='')
     parser.add_argument('-n', '--nruns', help='number of times to repeat each benchmark', type=int, required=False, default=1)
+    parser.add_argument('-N', '--ncores', help='number of cores', type=int, required=False, default=1)
     parser.add_argument('-t', '--trace', help='enable tracing', required=False, action="store_true")
     parser.add_argument('-B', '--backup', help='enable tracing', required=False, action="store_true")
     parser.add_argument('-M', '--multifidelity', help='enable multifidelity', required=False, action="store_true")
@@ -106,6 +109,7 @@ def parse(argv):
                           benchmarks = benchlist,
                           parrot_levels = args.parrot_levels,
                           nruns = args.nruns,
+                          ncores = args.ncores,
                           trace = args.trace,
                           backup = args.backup,
                           multifidelity = args.multifidelity,

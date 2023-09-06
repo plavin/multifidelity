@@ -41,4 +41,5 @@ This README covers the workflow for woking with SPEC CPU and Ariel.
 1. `data-collection-scripts/`: Scripts used to invoke the `./simulation` command. These scripts should be copied to this directory to run properly.
 2. `libftprjg/`: Stability detector library code
 3. `libpd/`: Phase detector library code
-4. `plots/`: Plots used in my dissertation and in the MEMSYS paper
+4. `notebooks/`: Jupyter notebooks that generate plots. These should be moved to this directory to re-run them
+5. `plots/`: Plots used in my dissertation and in the MEMSYS paper

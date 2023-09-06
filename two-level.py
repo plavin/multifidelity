@@ -87,6 +87,17 @@ def enableStats(stats_file):
       sst.enableStatisticForComponentType('ariel.ariel', 'cycles')
       sst.enableStatisticForComponentType('ariel.ariel', 'latency')
 
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_sp_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_dp_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_sp_simd_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_dp_simd_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_sp_scalar_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_dp_scalar_ins')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_sp_ops')
+      sst.enableStatisticForComponentType('ariel.ariel', 'fp_dp_ops')
+
+      sst.enableStatisticForComponentType('memHierarchy.Cache', 'CacheHits')
+      sst.enableStatisticForComponentType('memHierarchy.Cache', 'CacheMisses')
 
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_requests')
       sst.enableStatisticForComponentType('memHierarchy.Parrot', 'num_responses')
@@ -172,6 +183,7 @@ if __name__ == '__main__':
       parser.add_argument('-p', '--parrot_levels', help='comma separated list of memory levels to add Parrots to', type=str, default=None)
       parser.add_argument('-P', '--parrot-freq', help='frequency of parrots', type=str, default='2.0GHz')
       parser.add_argument('-z', '--l1-cache', help='size of l1 cache', type=str, default='4KiB')
+      parser.add_argument('-N', '--ncores', help='number of cores to simulate', type=int, default=1)
       parser.add_argument('-t', '--trace', help='enable tracing and specify directory to store trace', type=str, default=None)
       parser.add_argument('-r', '--rrfile', help='file to read RRs from', type=str, default=None)
       parser.add_argument('-M', '--multifidelity', help='whether to run a multifidelity simulation', action="store_true")
@@ -183,6 +195,11 @@ if __name__ == '__main__':
 
       if args.parrot_freq is not None:
             params['parrot']['clock'] = args.parrot_freq
+
+      if args.ncores is not None:
+            NCORES = int(args.ncores)
+            params['core']['corecount'] = NCORES
+            params['core']['envparamval0'] = str(NCORES)
 
       parrot_levels = []
       if args.parrot_levels is not None:

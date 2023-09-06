@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define ALIGN 4096
+
 typedef double dtype;
 
 void ariel_enable() {
+    asm volatile("": : :"memory");
     printf("ARIEL-CLIENT: Library enabled.\n");
 }
 
@@ -16,8 +19,12 @@ void fill(dtype *a, int N, double f) {
 }
 
 // Source: https://github.com/dmitrydonchenko/Block-Matrix-Multiplication-OpenMP/blob/master/block_matrix/Source.cpp
-void block_matrix_mul_parallel(dtype *A, dtype *B, dtype *C, int size, int block_size)
+void block_matrix_mul_parallel(dtype * restrict A, dtype * restrict B, dtype * restrict C, int size, int block_size)
 {
+    A = __builtin_assume_aligned(A, ALIGN);
+    B = __builtin_assume_aligned(B, ALIGN);
+    C = __builtin_assume_aligned(C, ALIGN);
+
     int i = 0, j = 0, k = 0, jj = 0, kk = 0;
     dtype tmp;
     int chunk = 1;
@@ -51,6 +58,7 @@ int main(int argc, char** argv) {
 
     dtype *a, *b, *c, temp = 0;
     int N, s;
+    int output = 1;
 
     if (argc < 3) {
         printf("Too few arguments.\n");
@@ -66,9 +74,21 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    a = (dtype*)malloc(sizeof(dtype) * N * N);
-    b = (dtype*)malloc(sizeof(dtype) * N * N);
-    c = (dtype*)malloc(sizeof(dtype) * N * N);
+    if (argc > 3) {
+        printf("Output disabled.\n");
+        output = 0;
+    }
+
+    size_t size = sizeof(dtype) * N * N;
+    if (size % ALIGN != 0) {
+        size += ALIGN - (size % ALIGN);
+    }
+
+    assert(size % ALIGN == 0);
+
+    a = (dtype*)aligned_alloc(ALIGN, size);
+    b = (dtype*)aligned_alloc(ALIGN, size);
+    c = (dtype*)aligned_alloc(ALIGN, size);
 
     fill(a, N, 3);
     fill(b, N, 2);
@@ -76,24 +96,15 @@ int main(int argc, char** argv) {
 
     ariel_enable();
 
-    /*
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-#pragma omp parallel for
-            for (int k = 0; k < N; k++) {
-#pragma omp critical
-                c[i*N + j] += a[i*N + k] * b[k*N + j];
-            }
-        }
-    }
-    */
     block_matrix_mul_parallel(a, b, c, N, s);
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            printf("%.0lf ", c[i*N+j]);
+    if (output) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                printf("%.0lf ", c[i*N+j]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 
 }
