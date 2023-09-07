@@ -8,14 +8,23 @@ You will need sst-core and sst-elements. Please use these specific commits.
 - `sst-elements`: [Link](https://github.com/plavin/sst-elements/commit/4d3e1758ab1381fe450852a670cb50df9f7bca5e)
 ## Basic operation
 
+Before you run a simulation, you need a binary to trace. This directory includes a simple matrix multiply program for testing purposes. Navigate to `mm/` and run `make`. 
+
+```
+cd mm
+make
+```
+
+
+
 The main simulator script is `./simulate.py`. At a minimum, you must specify a config file (see [workloads](https://github.com/plavin/spec-utils/tree/main/workloads)), and an SST sdl file, which will be either `two-level.py` or `two-level-timingdram.py`. Thus, a simple invocation would look like this:
 ```
-  ./simulate.py -c default-workload.py -s two-level.py
+  ./simulate.py -c matmul/mm-workload.py -s two-level.py
 ```
 
 You will also want to specify a location of a Parrot, most likely between the L1 and the L2:
 ```
-  ./simulate.py -c default-workload.py -s two-level.py -p l1
+  ./simulate.py -c matmul/mm-workload.py -s two-level.py -p l1
 ```
 
 Here is the rest of the usage information for the `./simulate.py` script:

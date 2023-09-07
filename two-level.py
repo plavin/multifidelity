@@ -1,4 +1,6 @@
 import sys
+sys.path.insert(0, './python')
+
 import os
 import sst
 from ariel_utils import parseAriel

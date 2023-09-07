@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
+# Path to all of our utilities
+sys.path.insert(0, './python')
+
 import os
 from ariel_utils import parse_generate_py_configs as get_configs
 import subprocess
@@ -20,7 +23,6 @@ import shutil
 from multiprocessing import Process, Queue, Pool, Manager
 import pathlib
 
-sys.path.insert(0, './python')
 import SimulationUtilities as SimUtil
 
 def custom_error_callback(error):
