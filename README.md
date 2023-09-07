@@ -1,3 +1,63 @@
+# Multifidelity Simulation
+
+This repository contains the simulator used to write our MEMSYS 23 paper and my dissertation work. There are also a number of support scripts. 
+## Prerequisites
+
+You will need sst-core and sst-elements. Please use these specific commits.
+- `sst-core`: [Link](https://github.com/sstsimulator/sst-core/commit/e70e231f097c24c5f9d6b4ec5d1b3cd217a5f6a4)
+- `sst-elements`: [Link](https://github.com/plavin/sst-elements/commit/4d3e1758ab1381fe450852a670cb50df9f7bca5e)
+## Basic operation
+
+The main simulator script is `./simulate.py`. At a minimum, you must specify a config file (see [workloads](https://github.com/plavin/spec-utils/tree/main/workloads)), and an SST sdl file, which will be either `two-level.py` or `two-level-timingdram.py`. Thus, a simple invocation would look like this:
+```
+  ./simulate.py -c default-workload.py -s two-level.py
+```
+
+You will also want to specify a location of a Parrot, most likely between the L1 and the L2:
+```
+  ./simulate.py -c default-workload.py -s two-level.py -p l1
+```
+
+Here is the rest of the usage information for the `./simulate.py` script:
+
+```
+$ ./simulate.py -h
+usage: simulate.py [-h] -s SDL_FILE -c CONFIG_FILE [-b BENCHMARKS]
+                   [-p PARROT_LEVELS] [-n NRUNS] [-N NCORES] [-t] [-B] [-M]
+                   [-o OUTFILE] [-r RRFILE] [--stop-at STOP_AT] [--dry]
+                   [-P PARROT_FREQ] [-z L1_CACHE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SDL_FILE, --sdl-file SDL_FILE
+                        an SST SDL file
+  -c CONFIG_FILE, --config-file CONFIG_FILE
+                        file containing dict of benchmark specifications
+  -b BENCHMARKS, --benchmarks BENCHMARKS
+                        comma separated list of benchmarks from the config
+  -p PARROT_LEVELS, --parrot-levels PARROT_LEVELS
+                        comma separated list of cache levels to enable the
+                        Parrot on
+  -n NRUNS, --nruns NRUNS
+                        number of times to repeat each benchmark
+  -N NCORES, --ncores NCORES
+                        number of cores
+  -t, --trace           enable tracing
+  -B, --backup          enable tracing
+  -M, --multifidelity   enable multifidelity
+  -o OUTFILE, --outfile OUTFILE
+                        file to print to
+  -r RRFILE, --rrfile RRFILE
+                        file to read representative regions from
+  --stop-at STOP_AT     how long to run simulations for
+  --dry                 only print the sst command
+  -P PARROT_FREQ, --parrot-freq PARROT_FREQ
+                        speed of parrot component
+  -z L1_CACHE, --l1-cache L1_CACHE
+                        size of l1 cache
+```
+
+
 # Spec + Ariel
 
 This README covers the workflow for woking with SPEC CPU and Ariel. 

@@ -69,7 +69,7 @@ def parse(argv):
     parser.add_argument('--stop-at', help= 'how long to run simulations for', type=str, required=False, dest='stop_at', default='100ms')
     parser.add_argument('--dry', help='only print the sst command', required=False, action="store_true")
     parser.add_argument('-P', '--parrot-freq', help='speed of parrot component', type=str, required=False, default='2.0GHz')
-    parser.add_argument('-z', '--l1-cache', help='size of l1 cahce', type=str, required=False, default='4KiB')
+    parser.add_argument('-z', '--l1-cache', help='size of l1 cache', type=str, required=False, default='4KiB')
 
     args = parser.parse_args(argv[1:])
 
