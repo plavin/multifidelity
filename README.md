@@ -8,16 +8,17 @@ You will need sst-core and sst-elements. Please use these specific commits.
 - `sst-elements`: [Link](https://github.com/plavin/sst-elements/commit/4d3e1758ab1381fe450852a670cb50df9f7bca5e)
 ## Basic operation
 
-Before you run a simulation, you need a binary to trace. This directory includes a simple matrix multiply program for testing purposes. Navigate to `mm/` and run `make`. 
+Before you run a simulation, you need a binary to trace. This directory includes a simple matrix multiply program for testing purposes. Navigate to `matmul/` and run `make`. 
 
 ```
-cd mm
+cd matmul
 make
+cd ..
 ```
 
-
-
-The main simulator script is `./simulate.py`. At a minimum, you must specify a config file (see [workloads](https://github.com/plavin/spec-utils/tree/main/workloads)), and an SST sdl file, which will be either `two-level.py` or `two-level-timingdram.py`. Thus, a simple invocation would look like this:
+The main simulator script is `./simulate.py`. At a minimum, you must specify a config file (see [workloads](https://github.com/plavin/spec-utils/tree/main/workloads)), and an SST sdl file, which will be either `two-level.py` or `two-level-timingdram.py`.
+We will use an example config script that is stored with the matmul example.
+Thus, a simple invocation would look like this:
 ```
   ./simulate.py -c matmul/mm-workload.py -s two-level.py
 ```
@@ -65,6 +66,8 @@ optional arguments:
   -z L1_CACHE, --l1-cache L1_CACHE
                         size of l1 cache
 ```
+
+Example usage of many of these options will be found in the `data-collection-scripts/` directory.
 
 
 # Spec + Ariel
