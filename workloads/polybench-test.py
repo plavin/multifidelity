@@ -1,0 +1,10 @@
+{   '2mm': {   'ariel_markers': True,
+                'cmd': '2mm',
+                'directory': '../polybench/polybench-code/linear-algebra/kernels/2mm'},
+    '3mm': {   'ariel_markers': True,
+                'cmd': '3mm',
+                'directory': '/nethome/plavin3/sst/polybench/polybench-code/linear-algebra/kernels/3mm'},
+    'adi': {   'ariel_markers': True,
+                   'cmd': 'adi',
+                   'directory': '/nethome/plavin3/sst/polybench/polybench-code/stencils/adi'},
+ }

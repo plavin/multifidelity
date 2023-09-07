@@ -1,0 +1,12 @@
+{   '2mm': {   'ariel_markers': True,
+               'cmd': '2mm',
+               'directory': '/nethome/plavin3/sst/polybench/polybench-code/linear-algebra/kernels/2mm'},
+    'adi': {   'ariel_markers': True,
+               'cmd': 'adi',
+               'directory': '/nethome/plavin3/sst/polybench/polybench-code/stencils/adi'},
+    'correlation': {   'ariel_markers': True,
+                       'cmd': 'correlation',
+                       'directory': '/nethome/plavin3/sst/polybench/polybench-code/datamining/correlation'},
+    'deriche': {   'ariel_markers': True,
+                   'cmd': 'deriche',
+                   'directory': '/nethome/plavin3/sst/polybench/polybench-code/medley/deriche'}}
