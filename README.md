@@ -19,13 +19,13 @@ cd ..
 The main simulator script is `./simulate.py`. At a minimum, you must specify a config file (see [workloads](https://github.com/plavin/spec-utils/tree/main/workloads)), and an SST sdl file, which will be either `two-level.py` or `two-level-timingdram.py`.
 We will use an example config script that is stored with the matmul example.
 Thus, a simple invocation would look like this:
-```
-  ./simulate.py -c matmul/mm-workload.py -s two-level.py
+```bash
+./simulate.py -c matmul/mm-workload.py -s two-level.py
 ```
 
 You will also want to specify a location of a Parrot, most likely between the L1 and the L2:
-```
-  ./simulate.py -c matmul/mm-workload.py -s two-level.py -p l1
+```bash
+./simulate.py -c matmul/mm-workload.py -s two-level.py -p l1
 ```
 
 Here is the rest of the usage information for the `./simulate.py` script:
@@ -68,6 +68,19 @@ optional arguments:
 ```
 
 Example usage of many of these options will be found in the `data-collection-scripts/` directory.
+
+## Dry runs
+
+You may want to run the SST sdl (`two-level.py`) directly, perhaps because the program is crashing and `simulate.py` is eating the output. The sdl has many of the same arguments as `./simulate.py`, which you can see with the following command:
+```
+sst two-level.py -- -h
+```
+
+_However_, it is easier to have `./simulate.py` give you the arguments it was using as a starting point. You can use the `--dry` option which should avoid making any output directories, even if `-B`, `-t`, or `-o` were specified.
+```bash
+./simulate.py -c matmul/mm-workload.py -s two-level.py -p l1 --dry
+```
+
 
 
 # Spec + Ariel
