@@ -9,3 +9,5 @@ sql/
 4ghz*
 stats/
 .ipynb_checkpoints
+experiment-results
+parrot-traces

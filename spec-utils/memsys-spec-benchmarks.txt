@@ -1,0 +1,6 @@
+# SPEC Benchmarks listed here will have sst configurations generated for them.
+# List generated from "Experiments with SPEC CPU 2017: Similarity, Balance, Phase Behavior and SimPoints". Song et. al, 2017
+
+# INT
+625.x264_s
+648.exchange2_s
